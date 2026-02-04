@@ -4,8 +4,15 @@
 
 package frc.robot;
 
+import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGReader;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -15,24 +22,52 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  * described in the TimedRobot documentation. If you change the name of this class or the package after creating this
  * project, you must also update the build.gradle file in the project.
  */
-public class Robot extends TimedRobot
+public class Robot extends LoggedRobot
 {
+  public static enum Mode {
+    REAL,
+    SIM,
+    REPLAY
+  }
 
-  private static Robot   instance;
-  private        Command m_autonomousCommand;
+  private        Command autonomousCommand;
 
-  private RobotContainer m_robotContainer;
+  private RobotContainer robotContainer;
 
   private Timer disabledTimer;
 
+  public static final Mode simMode     = Mode.SIM;
+  /// Change to Mode.REPLAY to enable REPLAy.
+  public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+
   public Robot()
   {
-    instance = this;
-  }
+    Logger.recordMetadata("ProjectName", "FRC2026");
 
-  public static Robot getInstance()
-  {
-    return instance;
+    switch (currentMode) {
+      case REAL:
+        // Running on a real robot, log to a USB stick ("/U/logs")
+        // Logger.addDataReceiver(new WPILOGWriter());
+        Logger.addDataReceiver(new NT4Publisher());
+        break;
+
+      case SIM:
+        // Running a physics simulator, log to NT
+        Logger.addDataReceiver(new NT4Publisher());
+        break;
+
+      case REPLAY:
+        // Replaying a log, set up replay source
+        setUseTiming(false); // Run as fast as possible
+        String logPath = LogFileUtil.findReplayLog();
+        Logger.setReplaySource(new WPILOGReader(logPath));
+        Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+        break;
+    }
+
+    Logger.start();
+
+    robotContainer = new RobotContainer();
   }
 
   /**
@@ -41,10 +76,6 @@ public class Robot extends TimedRobot
   @Override
   public void robotInit()
   {
-    // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
-    // autonomous chooser on the dashboard.
-    m_robotContainer = new RobotContainer();
-
     // Create a timer to disable motor brake a few seconds after disable.  This will let the robot stop
     // immediately when disabled, but then also let it be pushed more 
     disabledTimer = new Timer();
@@ -78,7 +109,7 @@ public class Robot extends TimedRobot
   @Override
   public void disabledInit()
   {
-    m_robotContainer.setMotorBrake(true);
+    robotContainer.setMotorBrake(true);
     disabledTimer.reset();
     disabledTimer.start();
   }
@@ -88,7 +119,7 @@ public class Robot extends TimedRobot
   {
     if (disabledTimer.hasElapsed(Constants.DrivebaseConstants.WHEEL_LOCK_TIME))
     {
-      m_robotContainer.setMotorBrake(false);
+      robotContainer.setMotorBrake(false);
       disabledTimer.stop();
       disabledTimer.reset();
     }
@@ -100,16 +131,16 @@ public class Robot extends TimedRobot
   @Override
   public void autonomousInit()
   {
-    m_robotContainer.setMotorBrake(true);
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+    robotContainer.setMotorBrake(true);
+    autonomousCommand = robotContainer.getAutonomousCommand();
 
     //Print the selected autonomous command upon autonomous init
-    System.out.println("Auto selected: " + m_autonomousCommand);
+    System.out.println("Auto selected: " + autonomousCommand);
 
     // schedule the autonomous command selected in the autoChooser
-    if (m_autonomousCommand != null)
+    if (autonomousCommand != null)
     {
-      m_autonomousCommand.schedule();
+      autonomousCommand.schedule();
     }
   }
 
@@ -128,9 +159,9 @@ public class Robot extends TimedRobot
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
-    if (m_autonomousCommand != null)
+    if (autonomousCommand != null)
     {
-      m_autonomousCommand.cancel();
+      autonomousCommand.cancel();
     } else
     {
       CommandScheduler.getInstance().cancelAll();
