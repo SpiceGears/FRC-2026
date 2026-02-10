@@ -22,9 +22,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.chute.ChuteMoveToPosition;
+import frc.robot.commands.chute.HoodMoveToPosition;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteDrive;
-import frc.robot.subsystems.ChuteSubsystem;
+import frc.robot.subsystems.HoodSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import java.io.File;
 import swervelib.SwerveInputStream;
@@ -45,7 +45,7 @@ public class RobotContainer
   // Establish a Sendable Chooser that will be able to be sent to the SmartDashboard, allowing selection of desired auto
   private final SendableChooser<Command> autoChooser;
 
-  private final ChuteSubsystem chuteSubsystem = new ChuteSubsystem();
+  private final HoodSubsystem chuteSubsystem = new HoodSubsystem();
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -193,14 +193,15 @@ public class RobotContainer
     {
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
+      driverXbox.y().onTrue(new HoodMoveToPosition(chuteSubsystem, () -> 1));
+      driverXbox.b().onTrue(new HoodMoveToPosition(chuteSubsystem, () -> -1));
       driverXbox.start().whileTrue(Commands.none());
       driverXbox.back().whileTrue(Commands.none());
       driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
       //driverXbox.rightBumper().onTrue( new AbsoluteDrive(drivebase, () -> 0.0,  () -> 0.4, () -> 0.0, () -> 1.0));
     }
 
-    ChuteMoveToPosition chutePosCommand = new ChuteMoveToPosition(chuteSubsystem, () -> driverXbox.getLeftTriggerAxis());
-    chuteSubsystem.setDefaultCommand(chutePosCommand);
+    //ChuteMoveToPosition chutePosCommand = new ChuteMoveToPosition(chuteSubsystem, () -> driverXbox.getLeftTriggerAxis());
 
   }
 
