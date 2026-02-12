@@ -17,7 +17,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 
 public class DriveConstants {
-  public static final double maxSpeedMetersPerSec = 9.72;
+  public static final double maxSpeedMetersPerSec = 4.5;
   public static final double odometryFrequency = 100.0; // Hz
   public static final double trackWidth = 69.5; // w metry
   public static final double wheelBase = 69.5; // w metry
@@ -79,17 +79,18 @@ public class DriveConstants {
   // Turn motor configuration
   public static final boolean turnInverted = false;
   public static final int turnMotorCurrentLimit = 20;
-  public static final double turnMotorReduction = /*9424.0 / 203.0*/ 21.42;
+  public static final double turnMotorReduction = 1; /*9424.0 / 203.0*/ // 21.42;
   public static final DCMotor turnGearbox = DCMotor.getNEO(1);
 
   // Turn encoder configuration
   public static final boolean turnEncoderInverted = true;
-  public static final double turnEncoderPositionFactor =
-      2 * Math.PI * 360; // Rotations (0-1) * 360deg to convert 0-1 range to 0-360 -> Radians
-  public static final double turnEncoderVelocityFactor = (2 * Math.PI) / 60.0; // RPM -> Rad/Sec
+  public static final double turnEncoderPositionFactor = 1;
+  // 2 * Math.PI; // Rotations -> Radians
+  public static final double turnEncoderVelocityFactor =
+      1; // (2 * Math.PI) / 60.0; // RPM -> Rad/Sec
 
   // Turn PID configuration
-  public static final double turnKp = 0.005;
+  public static final double turnKp = 2.0;
   public static final double turnKd = 0.0;
   public static final double turnSimP = 8.0;
   public static final double turnSimD = 0.0;
