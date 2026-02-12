@@ -14,7 +14,6 @@ import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
-import com.revrobotics.encoder.DetachedEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase;
@@ -27,6 +26,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.util.AbsoluteAnalogEncoder;
@@ -49,6 +49,8 @@ public class ModuleIOSpark implements ModuleIO {
   // Closed loop controllers
   private final SparkClosedLoopController driveController;
   private final SparkClosedLoopController turnController;
+  // RIO-side PID for turn control (we use the RoboRIO analog absolute encoder)
+  private final PIDController turnPid;
 
   // Queue inputs from odometry thread
   private final Queue<Double> timestampQueue;
@@ -116,6 +118,12 @@ public class ModuleIOSpark implements ModuleIO {
     driveController = driveSpark.getClosedLoopController();
     turnController = turnSpark.getClosedLoopController();
 
+    // RIO-side PID controller for the turn motor. We use the RoboRIO-mounted
+    // analog absolute encoder (turnEncoder) as the measurement and command
+    // voltages to the SPARK via setVoltage(...).
+    turnPid = new PIDController(turnKp, 0.0, turnKd);
+    turnPid.enableContinuousInput(turnPIDMinInput, turnPIDMaxInput);
+
     // Configure drive motor
     var driveConfig = new SparkFlexConfig();
     driveConfig
@@ -162,14 +170,14 @@ public class ModuleIOSpark implements ModuleIO {
         .positionConversionFactor(turnEncoderPositionFactor)
         .velocityConversionFactor(turnEncoderVelocityFactor)
         .averageDepth(2);
-  turnConfig
-    .closedLoop
-    // Provide the detached absolute encoder instance so the SPARK can use the
-    // externally-measured absolute encoder as its closed-loop feedback source.
-    .feedbackSensor(FeedbackSensor.kAbsoluteEncoder, turnEncoder)
-    .positionWrappingEnabled(true)
-    .positionWrappingInputRange(turnPIDMinInput, turnPIDMaxInput)
-    .pid(turnKp, 0.0, turnKd);
+    // We do NOT attach the RoboRIO analog absolute encoder to the SPARK as a
+    // closed-loop sensor (the analog encoder is wired to the RoboRIO). Instead
+    // we run the turn PID on the RoboRIO using WPILib's PIDController and
+    // command voltages to the SPARK. Configure only the SPARK parameters here.
+    turnConfig
+        .closedLoop
+        .positionWrappingEnabled(true)
+        .positionWrappingInputRange(turnPIDMinInput, turnPIDMaxInput);
     turnConfig
         .signals
         .absoluteEncoderPositionAlwaysOn(true)
@@ -262,6 +270,14 @@ public class ModuleIOSpark implements ModuleIO {
     double setpoint =
         MathUtil.inputModulus(
             rotation.plus(zeroRotation).getRadians(), turnPIDMinInput, turnPIDMaxInput);
-    turnController.setSetpoint(setpoint, ControlType.kPosition);
+
+    // Read the RoboRIO-mounted analog absolute encoder and compute PID output
+    double current = turnEncoder.getPosition();
+    double volts = turnPid.calculate(current, setpoint);
+
+    // Clamp to allowable voltage range
+    volts = MathUtil.clamp(volts, -12.0, 12.0);
+
+    turnSpark.setVoltage(volts);
   }
 }
