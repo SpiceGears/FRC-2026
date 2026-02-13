@@ -7,6 +7,8 @@
 
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.Degree;
+import static edu.wpi.first.units.Units.Radians;
 import static frc.robot.subsystems.drive.DriveConstants.*;
 import static frc.robot.util.SparkUtil.*;
 
@@ -43,7 +45,9 @@ public class ModuleIOSpark implements ModuleIO {
   private final SparkBase driveSpark;
   private final SparkBase turnSpark;
   private final RelativeEncoder driveEncoder;
-  private final AbsoluteEncoder turnEncoder;
+  private final RelativeEncoder turnEncoder;
+
+  private final AnalogEncoder absoluteEncoder; // MODIFIED
 
   // Closed loop controllers
   private final SparkClosedLoopController driveController;
@@ -92,27 +96,17 @@ public class ModuleIOSpark implements ModuleIO {
             },
             MotorType.kBrushless);
     driveEncoder = driveSpark.getEncoder();
-    // turnEncoder = turnSpark.getAbsoluteEncoder();
+    turnEncoder = turnSpark.getEncoder();
 
-    // # BEGIN CUSTOMIZED CODE:
-    switch (module) {
-      case 0:
-        turnEncoder = new AbsoluteAnalogEncoder(0);
-        break;
-      case 1:
-        turnEncoder = new AbsoluteAnalogEncoder(1);
-        break;
-      case 2:
-        turnEncoder = new AbsoluteAnalogEncoder(3);
-        break;
-      case 3:
-        turnEncoder = new AbsoluteAnalogEncoder(2);
-        break;
-      default:
-        turnEncoder = new AbsoluteAnalogEncoder(5);
-    }
-
-    // # END CUSTOMIZED CODE.
+    absoluteEncoder =
+        new AnalogEncoder(
+            switch (module) {
+              case 0 -> frontLeftAbsoluteEncoderChannel;
+              case 1 -> frontRightAbsoluteEncoderChannel;
+              case 2 -> backLeftAbsoluteEncoderChannel;
+              case 3 -> backRightAbsoluteEncoderChannel;
+              default -> 0;
+            });
 
     driveController = driveSpark.getClosedLoopController();
     turnController = turnSpark.getClosedLoopController();
@@ -164,25 +158,22 @@ public class ModuleIOSpark implements ModuleIO {
         .smartCurrentLimit(turnMotorCurrentLimit)
         .voltageCompensation(12.0);
     turnConfig
-        .absoluteEncoder
-        .inverted(turnEncoderInverted)
+        .encoder
+        // .inverted(turnEncoderInverted)
         .positionConversionFactor(turnEncoderPositionFactor)
         .velocityConversionFactor(turnEncoderVelocityFactor)
-        .averageDepth(2);
-    // We do NOT attach the RoboRIO analog absolute encoder to the SPARK as a
-    // closed-loop sensor (the analog encoder is wired to the RoboRIO). Instead
-    // we run the turn PID on the RoboRIO using WPILib's PIDController and
-    // command voltages to the SPARK. Configure only the SPARK parameters here.
+        .uvwAverageDepth(2);
     turnConfig
         .closedLoop
+        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .positionWrappingEnabled(true)
         .positionWrappingInputRange(turnPIDMinInput, turnPIDMaxInput);
     turnConfig
         .signals
-        .absoluteEncoderPositionAlwaysOn(true)
-        .absoluteEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))
-        .absoluteEncoderVelocityAlwaysOn(true)
-        .absoluteEncoderVelocityPeriodMs(20)
+        .primaryEncoderPositionAlwaysOn(true)
+        .primaryEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))
+        .primaryEncoderVelocityAlwaysOn(true)
+        .primaryEncoderVelocityPeriodMs(20)
         .appliedOutputPeriodMs(20)
         .busVoltagePeriodMs(20)
         .outputCurrentPeriodMs(20);
@@ -193,6 +184,10 @@ public class ModuleIOSpark implements ModuleIO {
             turnSpark.configure(
                 turnConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
+    tryUntilOk(
+        turnSpark,
+        5,
+        () -> turnEncoder.setPosition(Radians.convertFrom(absoluteEncoder.get() * 360, Degree)));
     // Create odometry queues
     timestampQueue = SparkOdometryThread.getInstance().makeTimestampQueue();
     drivePositionQueue =
@@ -202,7 +197,7 @@ public class ModuleIOSpark implements ModuleIO {
     // instead of going through the Spark-specific sampling/error path which can drop
     // or mis-time samples for a non-Spark sensor and produce jitter in AdvantageScope.
     turnPositionQueue =
-        SparkOdometryThread.getInstance().registerSignal(() -> turnEncoder.getPosition());
+        SparkOdometryThread.getInstance().registerSignal(turnSpark, turnEncoder::getPosition);
     //// MODIFIED
   }
 
@@ -220,30 +215,12 @@ public class ModuleIOSpark implements ModuleIO {
     inputs.driveConnected = driveConnectedDebounce.calculate(!sparkStickyFault);
 
     // Update turn inputs
-    // Read the external RoboRIO-mounted analog absolute encoder directly. Avoid using the
-    // Spark-registered sampling path for this signal because the analog encoder is not
-    // attached to the Spark and mixing the two sampling paths can produce missing/erratic
-    // samples in AdvantageScope.
-    boolean turnReadOk = true;
-    double turnPos = 0.0;
-    double turnVel = 0.0;
-    try {
-      turnPos = turnEncoder.getPosition();
-      turnVel = turnEncoder.getVelocity();
-    } catch (Exception e) {
-      // If reading fails, mark read as not-ok and leave defaults.
-      turnReadOk = false;
-    }
-    if (turnReadOk) {
-      inputs.turnPosition = new Rotation2d(turnPos).minus(zeroRotation);
-      inputs.turnVelocityRadPerSec = turnVel;
-    } else {
-      // fallback: keep velocity zero if we couldn't read the analog encoder.
-      inputs.turnVelocityRadPerSec = 0.0;
-    }
-
-    // Still read Spark-side telemetry (applied output, bus voltage, current) via the
-    // Spark-safe helpers.
+    sparkStickyFault = false;
+    ifOk(
+        turnSpark,
+        turnEncoder::getPosition,
+        (value) -> inputs.turnPosition = new Rotation2d(value).minus(zeroRotation));
+    ifOk(turnSpark, turnEncoder::getVelocity, (value) -> inputs.turnVelocityRadPerSec = value);
     ifOk(
         turnSpark,
         new DoubleSupplier[] {turnSpark::getAppliedOutput, turnSpark::getBusVoltage},
