@@ -14,7 +14,7 @@ public class AbsoluteAnalogEncoder implements AbsoluteEncoder {
   AnalogEncoder encoder;
 
   double lastReading;
-  double velocity;
+  double cachedVelocity;
   long lastTimestamp;
 
   public AbsoluteAnalogEncoder(int channel) {

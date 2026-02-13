@@ -23,7 +23,6 @@ import com.revrobotics.spark.SparkClosedLoopController.ArbFFUnits;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -125,7 +124,7 @@ public class ModuleIOSpark implements ModuleIO {
     turnPid.enableContinuousInput(turnPIDMinInput, turnPIDMaxInput);
 
     // Configure drive motor
-    var driveConfig = new SparkFlexConfig();
+    var driveConfig = new SparkMaxConfig();
     driveConfig
         .idleMode(IdleMode.kBrake)
         .smartCurrentLimit(driveMotorCurrentLimit)
@@ -198,8 +197,12 @@ public class ModuleIOSpark implements ModuleIO {
     timestampQueue = SparkOdometryThread.getInstance().makeTimestampQueue();
     drivePositionQueue =
         SparkOdometryThread.getInstance().registerSignal(driveSpark, driveEncoder::getPosition);
+    // The turn encoder is an external RoboRIO-mounted analog encoder (not a Spark signal).
+    // Register it as a generic DoubleSupplier so the odometry thread samples it directly
+    // instead of going through the Spark-specific sampling/error path which can drop
+    // or mis-time samples for a non-Spark sensor and produce jitter in AdvantageScope.
     turnPositionQueue =
-        SparkOdometryThread.getInstance().registerSignal(turnSpark, turnEncoder::getPosition);
+        SparkOdometryThread.getInstance().registerSignal(() -> turnEncoder.getPosition());
     //// MODIFIED
   }
 
@@ -217,18 +220,37 @@ public class ModuleIOSpark implements ModuleIO {
     inputs.driveConnected = driveConnectedDebounce.calculate(!sparkStickyFault);
 
     // Update turn inputs
-    sparkStickyFault = false;
-    ifOk(
-        turnSpark,
-        turnEncoder::getPosition, // MODIFIED
-        (value) -> inputs.turnPosition = new Rotation2d(value).minus(zeroRotation));
-    ifOk(turnSpark, turnEncoder::getVelocity, (value) -> inputs.turnVelocityRadPerSec = value);
+    // Read the external RoboRIO-mounted analog absolute encoder directly. Avoid using the
+    // Spark-registered sampling path for this signal because the analog encoder is not
+    // attached to the Spark and mixing the two sampling paths can produce missing/erratic
+    // samples in AdvantageScope.
+    boolean turnReadOk = true;
+    double turnPos = 0.0;
+    double turnVel = 0.0;
+    try {
+      turnPos = turnEncoder.getPosition();
+      turnVel = turnEncoder.getVelocity();
+    } catch (Exception e) {
+      // If reading fails, mark read as not-ok and leave defaults.
+      turnReadOk = false;
+    }
+    if (turnReadOk) {
+      inputs.turnPosition = new Rotation2d(turnPos).minus(zeroRotation);
+      inputs.turnVelocityRadPerSec = turnVel;
+    } else {
+      // fallback: keep velocity zero if we couldn't read the analog encoder.
+      inputs.turnVelocityRadPerSec = 0.0;
+    }
+
+    // Still read Spark-side telemetry (applied output, bus voltage, current) via the
+    // Spark-safe helpers.
     ifOk(
         turnSpark,
         new DoubleSupplier[] {turnSpark::getAppliedOutput, turnSpark::getBusVoltage},
         (values) -> inputs.turnAppliedVolts = values[0] * values[1]);
     ifOk(turnSpark, turnSpark::getOutputCurrent, (value) -> inputs.turnCurrentAmps = value);
-    inputs.turnConnected = turnConnectedDebounce.calculate(!sparkStickyFault);
+    // Use the analog-read success as our connected indicator for turn.
+    inputs.turnConnected = turnConnectedDebounce.calculate(turnReadOk);
 
     // Update odometry inputs
     inputs.odometryTimestamps =
