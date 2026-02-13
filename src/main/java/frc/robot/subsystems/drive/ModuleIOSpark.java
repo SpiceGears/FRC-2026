@@ -12,6 +12,7 @@ import static edu.wpi.first.units.Units.Radians;
 import static frc.robot.subsystems.drive.DriveConstants.*;
 import static frc.robot.util.SparkUtil.*;
 
+import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
@@ -26,9 +27,10 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.AnalogEncoder;
+import frc.robot.util.AbsoluteAnalogEncoder;
 import java.util.Queue;
 import java.util.function.DoubleSupplier;
 
@@ -50,6 +52,8 @@ public class ModuleIOSpark implements ModuleIO {
   // Closed loop controllers
   private final SparkClosedLoopController driveController;
   private final SparkClosedLoopController turnController;
+  // RIO-side PID for turn control (we use the RoboRIO analog absolute encoder)
+  private final PIDController turnPid;
 
   // Queue inputs from odometry thread
   private final Queue<Double> timestampQueue;
@@ -107,6 +111,12 @@ public class ModuleIOSpark implements ModuleIO {
     driveController = driveSpark.getClosedLoopController();
     turnController = turnSpark.getClosedLoopController();
 
+    // RIO-side PID controller for the turn motor. We use the RoboRIO-mounted
+    // analog absolute encoder (turnEncoder) as the measurement and command
+    // voltages to the SPARK via setVoltage(...).
+    turnPid = new PIDController(turnKp, 0.0, turnKd);
+    turnPid.enableContinuousInput(turnPIDMinInput, turnPIDMaxInput);
+
     // Configure drive motor
     var driveConfig = new SparkMaxConfig();
     driveConfig
@@ -157,8 +167,7 @@ public class ModuleIOSpark implements ModuleIO {
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .positionWrappingEnabled(true)
-        .positionWrappingInputRange(turnPIDMinInput, turnPIDMaxInput)
-        .pid(turnKp, 0.0, turnKd);
+        .positionWrappingInputRange(turnPIDMinInput, turnPIDMaxInput);
     turnConfig
         .signals
         .primaryEncoderPositionAlwaysOn(true)
@@ -183,6 +192,10 @@ public class ModuleIOSpark implements ModuleIO {
     timestampQueue = SparkOdometryThread.getInstance().makeTimestampQueue();
     drivePositionQueue =
         SparkOdometryThread.getInstance().registerSignal(driveSpark, driveEncoder::getPosition);
+    // The turn encoder is an external RoboRIO-mounted analog encoder (not a Spark signal).
+    // Register it as a generic DoubleSupplier so the odometry thread samples it directly
+    // instead of going through the Spark-specific sampling/error path which can drop
+    // or mis-time samples for a non-Spark sensor and produce jitter in AdvantageScope.
     turnPositionQueue =
         SparkOdometryThread.getInstance().registerSignal(turnSpark, turnEncoder::getPosition);
     //// MODIFIED
@@ -213,7 +226,8 @@ public class ModuleIOSpark implements ModuleIO {
         new DoubleSupplier[] {turnSpark::getAppliedOutput, turnSpark::getBusVoltage},
         (values) -> inputs.turnAppliedVolts = values[0] * values[1]);
     ifOk(turnSpark, turnSpark::getOutputCurrent, (value) -> inputs.turnCurrentAmps = value);
-    inputs.turnConnected = turnConnectedDebounce.calculate(!sparkStickyFault);
+    // Use the analog-read success as our connected indicator for turn.
+    inputs.turnConnected = turnConnectedDebounce.calculate(turnReadOk);
 
     // Update odometry inputs
     inputs.odometryTimestamps =
@@ -255,6 +269,14 @@ public class ModuleIOSpark implements ModuleIO {
     double setpoint =
         MathUtil.inputModulus(
             rotation.plus(zeroRotation).getRadians(), turnPIDMinInput, turnPIDMaxInput);
-    turnController.setSetpoint(setpoint, ControlType.kPosition);
+
+    // Read the RoboRIO-mounted analog absolute encoder and compute PID output
+    double current = turnEncoder.getPosition();
+    double volts = turnPid.calculate(current, setpoint);
+
+    // Clamp to allowable voltage range
+    volts = MathUtil.clamp(volts, -12.0, 12.0);
+
+    turnSpark.setVoltage(volts);
   }
 }
