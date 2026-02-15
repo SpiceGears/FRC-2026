@@ -22,7 +22,12 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.intake.IntakeFuel;
+import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+
+import static edu.wpi.first.units.Units.Degrees;
+
 import java.io.File;
 import swervelib.SwerveInputStream;
 
@@ -98,10 +103,15 @@ public class RobotContainer
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
+
+
+  IntakeSubsystem intake = new IntakeSubsystem();
   public RobotContainer()
   {
     // Configure the trigger bindings
     configureBindings();
+
+    intake.setDefaultCommand(intake.setAngle(Degrees.of(-90)));
     DriverStation.silenceJoystickConnectionWarning(true);
     
     //Create the NamedCommands that will be used in PathPlanner
@@ -139,6 +149,9 @@ public class RobotContainer
     Command driveFieldOrientedAnglularVelocityKeyboard = drivebase.driveFieldOriented(driveAngularVelocityKeyboard);
     Command driveSetpointGenKeyboard = drivebase.driveWithSetpointGeneratorFieldRelative(
         driveDirectAngleKeyboard);
+
+
+
 
     if (RobotBase.isSimulation())
     {
@@ -188,10 +201,11 @@ public class RobotContainer
     {
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
-      driverXbox.start().whileTrue(Commands.none());
+      driverXbox.start().onTrue(intake.setAngle(Degrees.of(90)));
       driverXbox.back().whileTrue(Commands.none());
       driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
       driverXbox.rightBumper().onTrue(Commands.none());
+      driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));
     }
 
   }

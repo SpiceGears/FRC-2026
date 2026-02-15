@@ -48,4 +48,13 @@ public final class Constants
     public static final double RIGHT_X_DEADBAND = 0.1;
     public static final double TURN_CONSTANT    = 6;
   }
+
+
+
+
+  public static class PortMap 
+  {
+    public static final int INTAKE_EXTENDER_ID = 22;
+    public static final int INTAKE_SPINNER_ID = 21;
+  }
 }
