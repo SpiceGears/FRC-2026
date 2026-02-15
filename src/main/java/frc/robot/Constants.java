@@ -56,5 +56,9 @@ public final class Constants
   {
     public static final int INTAKE_EXTENDER_ID = 22;
     public static final int INTAKE_SPINNER_ID = 21;
+    public static final int FEEDER_MOTOR_ID = 23;
+
+    public static final int SHOOTER_MOTOR_ID = 31;
+
   }
 }

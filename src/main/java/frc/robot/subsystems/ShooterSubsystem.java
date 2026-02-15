@@ -1,61 +1,91 @@
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
+
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.Pounds;
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Centimeter;
+import static edu.wpi.first.units.Units.DegreesPerSecond;
+import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Kilograms;
+import static edu.wpi.first.units.Units.RPM;
 
-import com.ctre.phoenix6.hardware.TalonFX;
-import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
 
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import yams.gearing.GearBox;
 import yams.gearing.MechanismGearing;
+import yams.mechanisms.config.FlyWheelConfig;
+import yams.mechanisms.velocity.FlyWheel;
 import yams.motorcontrollers.SmartMotorController;
 import yams.motorcontrollers.SmartMotorControllerConfig;
 import yams.motorcontrollers.SmartMotorControllerConfig.ControlMode;
 import yams.motorcontrollers.SmartMotorControllerConfig.MotorMode;
+import yams.motorcontrollers.SmartMotorControllerConfig.TelemetryVerbosity;
 import yams.motorcontrollers.local.SparkWrapper;
-import yams.motorcontrollers.remote.TalonFXWrapper;
 
 public class ShooterSubsystem extends SubsystemBase {
-    private SmartMotorControllerConfig rightWheelConfig = new SmartMotorControllerConfig(this)
-        .withControlMode(ControlMode.CLOSED_LOOP)
-        .withIdleMode(MotorMode.COAST)
-        .withGearing(new MechanismGearing(GearBox.fromReductionStages(3, 4)))
-        .withMomentOfInertia(Inches.of(4), Pounds.of(2))
-        .withClosedLoopController(1, 0, 0)
-        .withFeedforward(new SimpleMotorFeedforward(0, 0, 0))
-        .withMotorInverted(false)
-        .withTelemetry("RightFlyWheel", SmartMotorControllerConfig.TelemetryVerbosity.HIGH);
+  /** Creates a new ShooterSubsystem. */
+  SmartMotorControllerConfig shooterMotorConfig = new SmartMotorControllerConfig(this)
+  .withControlMode(ControlMode.CLOSED_LOOP)
+  .withClosedLoopController(
+    50, 0, 0, DegreesPerSecond.of(90), DegreesPerSecondPerSecond.of(45))
+  .withFeedforward(new SimpleMotorFeedforward(0, 0)
+  ).withSimFeedforward(new SimpleMotorFeedforward(0, 0))
+  .withTelemetry("ShooterMotor", TelemetryVerbosity.MID)
+  .withGearing(new MechanismGearing(GearBox.fromReductionStages(1)))
+  .withMotorInverted(false)
+  .withIdleMode(MotorMode.COAST)
+  .withStatorCurrentLimit(Amps.of(40));
 
-    private SmartMotorController rightWheel = new SparkWrapper(
-        new SparkMax(4, MotorType.kBrushless), DCMotor.getNEO(1), rightWheelConfig);
+  private final SparkMax shooterSpark = new SparkMax(Constants.PortMap.SHOOTER_MOTOR_ID, MotorType.kBrushless);
 
-    private SmartMotorControllerConfig leftWheelConfig = new SmartMotorControllerConfig(this)
-        .withControlMode(ControlMode.CLOSED_LOOP)
-        .withIdleMode(MotorMode.COAST)
-        .withGearing(new MechanismGearing(GearBox.fromReductionStages(3, 4)))
-        .withMomentOfInertia(Inches.of(4), Pounds.of(2))
-        .withClosedLoopController(1, 0, 0)
-        .withFeedforward(new SimpleMotorFeedforward(0, 0, 0))
-        .withMotorInverted(false)
-        .withTelemetry("LeftFlyWheel", SmartMotorControllerConfig.TelemetryVerbosity.HIGH);
+  private SmartMotorController shooterController = new SparkWrapper(shooterSpark, DCMotor.getNEO(1), shooterMotorConfig);
 
-    private SmartMotorController leftWheel = new SparkWrapper(
-        new SparkMax(5, MotorType.kBrushless),  DCMotor.getNEO(1), leftWheelConfig);
+  private final FlyWheelConfig shooterMechanismConfig = new FlyWheelConfig(shooterController)
+  .withDiameter(Centimeter.of(10))
+  .withMass(Kilograms.of(1.5))
+  .withUpperSoftLimit(RPM.of(6000))
+  .withTelemetry("ShooterMechanism", TelemetryVerbosity.HIGH);
+  
 
-    public ShooterSubsystem() {
-        rightWheel.setupTelemetry();
-        leftWheel.setupTelemetry();
-    }
+  private FlyWheel shooter = new FlyWheel(shooterMechanismConfig);
 
-    public Pair<LinearVelocity, LinearVelocity> getLinearSpeed() {
-        return Pair.of(rightWheel.getMeasurementVelocity(), leftWheel.getMeasurementVelocity());
-    }
 
+  public ShooterSubsystem() {}
+
+  @Override
+  public void periodic() {
+    // This method will be called once per scheduler run
+    shooter.updateTelemetry();
+  }
+
+  @Override
+  public void simulationPeriodic() {
+    // This method will be called once per scheduler run during simulation
+    shooter.simIterate();
+  }
+
+
+  public AngularVelocity getVelocity() {
+    return shooter.getSpeed();
+  }
+
+  public Command setVelocity(AngularVelocity velocity) 
+  {
+    return shooter.setSpeed(velocity);
+  }
+
+  public void setVelocitySetpoint(AngularVelocity setpoint) 
+  {
+    shooter.setMechanismVelocitySetpoint(setpoint);
+  }
 
 }
