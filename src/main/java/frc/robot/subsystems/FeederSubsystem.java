@@ -54,6 +54,7 @@ public class FeederSubsystem extends SubsystemBase {
 
   public void stop() 
   {
+    //set desired duty cycle to 0, effectively stopping the mechanism
     feederController.setDutyCycle(0);
   }
 }

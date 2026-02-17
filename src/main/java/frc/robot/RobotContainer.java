@@ -22,9 +22,13 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.feeder.FeederFeedShooterCommand;
 import frc.robot.commands.intake.IntakeFuel;
+import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+import frc.robot.subsystems.vision.limelight.AprilTagVisionSubsystem;
 
 import static edu.wpi.first.units.Units.Degrees;
 
@@ -41,6 +45,11 @@ public class RobotContainer
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   final         CommandXboxController driverXbox = new CommandXboxController(0);
+
+  final AprilTagVisionSubsystem aprilTagVisionSubsystem = new AprilTagVisionSubsystem();
+
+  final FeederSubsystem feeder = new FeederSubsystem();
+
   // The robot's subsystems and commands are defined here...
   private final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve"));
 
@@ -106,6 +115,7 @@ public class RobotContainer
 
 
   IntakeSubsystem intake = new IntakeSubsystem();
+  ShooterSubsystem shooter = new ShooterSubsystem();
   public RobotContainer()
   {
     // Configure the trigger bindings
@@ -199,12 +209,14 @@ public class RobotContainer
       driverXbox.rightBumper().onTrue(Commands.none());
     } else
     {
+
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
-      driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
+      driverXbox.x().onTrue(shooter.toogleShooter());
       driverXbox.start().onTrue(intake.setAngle(Degrees.of(90)));
       driverXbox.back().whileTrue(Commands.none());
       driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
-      driverXbox.rightBumper().onTrue(Commands.none());
+      //driverXbox.rightBumper().onTrue(Commands.none());
+      feeder.setDefaultCommand(new FeederFeedShooterCommand(feeder, driverXbox.rightBumper()));
       driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));
     }
 

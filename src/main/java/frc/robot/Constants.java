@@ -4,6 +4,12 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Centimeter;
+import static edu.wpi.first.units.Units.Radian;
+import static edu.wpi.first.units.Units.Radians;
+
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import swervelib.math.Matter;
@@ -39,6 +45,24 @@ public final class Constants
     public static final double WHEEL_LOCK_TIME = 10; // seconds
   }
 
+  public static final class VisionConstants
+  {
+    public static final String SHOOTER_LL4_NAME = "shooterLL4";
+    public static final int SHOOTER_LL4_PIPELINE_INDEX = 0;
+    
+    public static final Pose3d SHOOTER_LL4_CAMERA_OFFSET = new Pose3d(
+      Centimeter.of(0),
+      Centimeter.of(0),
+      Centimeter.of(0),
+      
+      new Rotation3d(
+        Radian.of(0),
+        Radian.of(0),
+        Radian.of(0)
+      )
+    );
+  }
+
   public static class OperatorConstants
   {
 
@@ -59,6 +83,8 @@ public final class Constants
     public static final int FEEDER_MOTOR_ID = 23;
 
     public static final int SHOOTER_MOTOR_ID = 31;
+
+    public static final int ELEVATOR_MOTOR_ID = 41;
 
   }
 }

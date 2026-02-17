@@ -58,6 +58,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
   private FlyWheel shooter = new FlyWheel(shooterMechanismConfig);
 
+  private boolean shooterEnabled = false;
+
 
   public ShooterSubsystem() {}
 
@@ -74,16 +76,30 @@ public class ShooterSubsystem extends SubsystemBase {
   }
 
 
-  public AngularVelocity getVelocity() {
+  private AngularVelocity getVelocity() {
     return shooter.getSpeed();
   }
 
-  public Command setVelocity(AngularVelocity velocity) 
+  private Command setVelocity(AngularVelocity velocity) 
   {
     return shooter.setSpeed(velocity);
   }
 
-  public void setVelocitySetpoint(AngularVelocity setpoint) 
+  public Command toogleShooter() 
+  {
+    if (!shooterEnabled)
+    {
+      shooterEnabled = true;
+      return setVelocity(RPM.of(5000));
+    }
+    else
+    {
+      shooterEnabled = false;
+      return setVelocity(RPM.of(0));
+    }
+  }
+
+  private void setVelocitySetpoint(AngularVelocity setpoint) 
   {
     shooter.setMechanismVelocitySetpoint(setpoint);
   }

@@ -19,6 +19,7 @@ import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -33,6 +34,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
 import frc.robot.subsystems.swervedrive.Vision.Cameras;
+import frc.robot.subsystems.vision.limelight.AprilTagVisionSubsystem;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -67,7 +70,9 @@ public class SwerveSubsystem extends SubsystemBase
   /**
    * PhotonVision class to keep an accurate odometry.
    */
-  private       Vision      vision;
+  //private       Vision      vision;
+
+  private final AprilTagVisionSubsystem vision;
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -76,6 +81,7 @@ public class SwerveSubsystem extends SubsystemBase
    */
    public SwerveSubsystem(File directory)
   { 
+    vision = AprilTagVisionSubsystem.instance;
     boolean blueAlliance = false;
     Pose2d startingPose = blueAlliance ? new Pose2d(new Translation2d(Meter.of(1),
                                                                       Meter.of(4)),
@@ -119,6 +125,7 @@ public class SwerveSubsystem extends SubsystemBase
    */
   public SwerveSubsystem(SwerveDriveConfiguration driveCfg, SwerveControllerConfiguration controllerCfg)
   {
+    vision = AprilTagVisionSubsystem.instance;
     swerveDrive = new SwerveDrive(driveCfg,
                                   controllerCfg,
                                   Constants.MAX_SPEED,
@@ -131,7 +138,7 @@ public class SwerveSubsystem extends SubsystemBase
    */
   public void setupPhotonVision()
   {
-    vision = new Vision(swerveDrive::getPose, swerveDrive.field);
+    //vision = new Vision(swerveDrive::getPose, swerveDrive.field);
   }
 
   @Override
@@ -141,7 +148,12 @@ public class SwerveSubsystem extends SubsystemBase
     if (visionDriveTest)
     {
       swerveDrive.updateOdometry();
-      vision.updatePoseEstimation(swerveDrive);
+      Optional<Pose3d> visionPose = vision.getEstimatedPose();
+      if (visionPose.isPresent())
+      {
+        swerveDrive.addVisionMeasurement(visionPose.get().toPose2d(), Timer.getFPGATimestamp());
+      }
+      //vision.updatePoseEstimation(swerveDrive);
     }
   }
 
