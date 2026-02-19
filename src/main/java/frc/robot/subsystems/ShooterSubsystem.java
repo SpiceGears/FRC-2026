@@ -14,12 +14,14 @@ import static edu.wpi.first.units.Units.RPM;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.PortMap;
 import yams.gearing.GearBox;
 import yams.gearing.MechanismGearing;
 import yams.mechanisms.config.FlyWheelConfig;
@@ -36,16 +38,27 @@ public class ShooterSubsystem extends SubsystemBase {
   SmartMotorControllerConfig shooterMotorConfig = new SmartMotorControllerConfig(this)
   .withControlMode(ControlMode.CLOSED_LOOP)
   .withClosedLoopController(
-    50, 0, 0, DegreesPerSecond.of(90), DegreesPerSecondPerSecond.of(45))
+    50, 0, 0, RPM.of(6000), DegreesPerSecondPerSecond.of(75))
   .withFeedforward(new SimpleMotorFeedforward(0, 0)
   ).withSimFeedforward(new SimpleMotorFeedforward(0, 0))
   .withTelemetry("ShooterMotor", TelemetryVerbosity.MID)
   .withGearing(new MechanismGearing(GearBox.fromReductionStages(1)))
   .withMotorInverted(false)
   .withIdleMode(MotorMode.COAST)
-  .withStatorCurrentLimit(Amps.of(40));
+  .withStatorCurrentLimit(Amps.of(40))
+  .withFollowers(
+    new Pair<Object, Boolean>(
+      new SparkMax(PortMap.SHOOTER_MID_MOTOR_ID, MotorType.kBrushless),
+      false
+    ),
+    new Pair<Object, Boolean>(
+      new SparkMax(PortMap.SHOOTER_RIGHT_MOTOR_ID, MotorType.kBrushless),
+      true
+     )
+    );
 
-  private final SparkMax shooterSpark = new SparkMax(Constants.PortMap.SHOOTER_MOTOR_ID, MotorType.kBrushless);
+  private final SparkMax shooterSpark = new SparkMax(Constants.PortMap.SHOOTER_LEFT_MOTOR_ID, MotorType.kBrushless);
+
 
   private SmartMotorController shooterController = new SparkWrapper(shooterSpark, DCMotor.getNEO(1), shooterMotorConfig);
 
@@ -59,6 +72,8 @@ public class ShooterSubsystem extends SubsystemBase {
   private FlyWheel shooter = new FlyWheel(shooterMechanismConfig);
 
   private boolean shooterEnabled = false;
+
+  private AngularVelocity targetVelocity = Constants.ShooterConstats.INITIAL_TARGET_VELOCITY;
 
 
   public ShooterSubsystem() {}
@@ -76,8 +91,13 @@ public class ShooterSubsystem extends SubsystemBase {
   }
 
 
-  private AngularVelocity getVelocity() {
+  public AngularVelocity getVelocity() {
     return shooter.getSpeed();
+  }
+
+  public boolean isAtTargetVelocity() 
+  {
+    return shooter.getSpeed().isNear(targetVelocity, Constants.ShooterConstats.VELOCITY_TOLERANCE);
   }
 
   private Command setVelocity(AngularVelocity velocity) 
@@ -90,7 +110,7 @@ public class ShooterSubsystem extends SubsystemBase {
     if (!shooterEnabled)
     {
       shooterEnabled = true;
-      return setVelocity(RPM.of(5000));
+      return setVelocity(targetVelocity);
     }
     else
     {

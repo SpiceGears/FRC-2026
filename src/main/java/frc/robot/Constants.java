@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Centimeter;
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radian;
 import static edu.wpi.first.units.Units.Radians;
 
@@ -12,6 +13,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.AngularVelocity;
 import swervelib.math.Matter;
 
 /**
@@ -43,6 +45,7 @@ public final class Constants
 
     // Hold time on motor brakes when disabled
     public static final double WHEEL_LOCK_TIME = 10; // seconds
+    public static final boolean USE_VISION = false;
   }
 
   public static final class VisionConstants
@@ -63,6 +66,13 @@ public final class Constants
     );
   }
 
+  public static final class ShooterConstats 
+  {
+    public static final AngularVelocity INITIAL_TARGET_VELOCITY = RPM.of(5600);
+    public static final AngularVelocity VELOCITY_TOLERANCE = RPM.of(50);
+    public static final boolean AUTO_PASSTHROUGH_ON_TARGET_VELOCITY = true;
+  }
+
   public static class OperatorConstants
   {
 
@@ -79,12 +89,22 @@ public final class Constants
   public static class PortMap 
   {
     public static final int INTAKE_EXTENDER_ID = 22;
-    public static final int INTAKE_SPINNER_ID = 21;
-    public static final int FEEDER_MOTOR_ID = 23;
+    public static final int INTAKE_EXTENDER_FOLLOWER_ID = 23;
 
-    public static final int SHOOTER_MOTOR_ID = 31;
+    public static final int INTAKE_SPINNER_ID = 21;
+    public static final int FEEDER_MOTOR_ID = 24;
+
+    public static final int SHOOTER_LEFT_MOTOR_ID = 31;
+    public static final int SHOOTER_MID_MOTOR_ID = 32;
+    public static final int SHOOTER_RIGHT_MOTOR_ID = 33;
+
+    public static final int SHOOTER_PASSER_MOTOR_ID = 34;
 
     public static final int ELEVATOR_MOTOR_ID = 41;
+
+
+    public static final int HOOD_LEFT_ACTUATOR_ANALOG_PORT = 1;
+    public static final int HOOD_RIGHT_ACTUATOR_ANALOG_PORT = 2;
 
   }
 }

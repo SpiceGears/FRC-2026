@@ -24,8 +24,11 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.feeder.FeederFeedShooterCommand;
 import frc.robot.commands.intake.IntakeFuel;
+import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
+import frc.robot.subsystems.HoodSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.ShooterPasserSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.subsystems.vision.limelight.AprilTagVisionSubsystem;
@@ -48,7 +51,6 @@ public class RobotContainer
 
   final AprilTagVisionSubsystem aprilTagVisionSubsystem = new AprilTagVisionSubsystem();
 
-  final FeederSubsystem feeder = new FeederSubsystem();
 
   // The robot's subsystems and commands are defined here...
   private final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve"));
@@ -114,14 +116,18 @@ public class RobotContainer
    */
 
 
-  IntakeSubsystem intake = new IntakeSubsystem();
-  ShooterSubsystem shooter = new ShooterSubsystem();
+  final IntakeSubsystem intake = new IntakeSubsystem();
+  final ShooterSubsystem shooter = new ShooterSubsystem();
+  final FeederSubsystem feeder = new FeederSubsystem();
+  final ClimbSubsystem climb = new ClimbSubsystem();
+  final ShooterPasserSubsystem shooterPasser = new ShooterPasserSubsystem();
+  final HoodSubsystem hood = new HoodSubsystem();
   public RobotContainer()
   {
     // Configure the trigger bindings
     configureBindings();
 
-    intake.setDefaultCommand(intake.setAngle(Degrees.of(-90)));
+    //intake.setDefaultCommand(intake.setAngle(Degrees.of(-90)));
     DriverStation.silenceJoystickConnectionWarning(true);
     
     //Create the NamedCommands that will be used in PathPlanner
@@ -214,7 +220,7 @@ public class RobotContainer
       driverXbox.x().onTrue(shooter.toogleShooter());
       driverXbox.start().onTrue(intake.setAngle(Degrees.of(90)));
       driverXbox.back().whileTrue(Commands.none());
-      driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
+      driverXbox.leftBumper().whileTrue(Commands.runOnce(() -> hood.extendFull()));
       //driverXbox.rightBumper().onTrue(Commands.none());
       feeder.setDefaultCommand(new FeederFeedShooterCommand(feeder, driverXbox.rightBumper()));
       driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));

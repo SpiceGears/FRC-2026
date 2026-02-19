@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.Centimeter;
 import static edu.wpi.first.units.Units.Meter;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
@@ -32,9 +33,9 @@ public class FeederSubsystem extends SubsystemBase {
   .withStatorCurrentLimit(Amp.of(20))
   .withGearing(1)
   .withTelemetry("FeederMotor", TelemetryVerbosity.LOW);
-  private SparkMax feederMotor = new SparkMax(PortMap.FEEDER_MOTOR_ID, MotorType.kBrushless);
+  private SparkMax feederMotor = new SparkMax(PortMap.FEEDER_MOTOR_ID, MotorType.kBrushed);
 
-  private SmartMotorController feederController = new SparkWrapper(feederMotor, DCMotor.getNEO(1), feederControllerConfig);
+  private SmartMotorController feederController = new SparkWrapper(feederMotor, DCMotor.getVex775Pro(1), feederControllerConfig);
 
   /** Creates a new FeederSubsystem. */
   public FeederSubsystem() 

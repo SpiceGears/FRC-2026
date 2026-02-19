@@ -15,6 +15,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
@@ -48,7 +49,7 @@ public class IntakeSubsystem extends SubsystemBase {
     .withControlMode(ControlMode.CLOSED_LOOP)
     .withClosedLoopController(50, 0, 0, 
     DegreesPerSecond.of(90), DegreesPerSecondPerSecond.of(45))
-    .withSimClosedLoopController(50, 0, 0, DegreesPerSecond.of(90), DegreesPerSecondPerSecond.of(45))
+    .withSimClosedLoopController(50, 0, 0, DegreesPerSecond.of(5), DegreesPerSecondPerSecond.of(45))
     .withFeedforward(new ArmFeedforward(0, 0, 0))
     .withSimFeedforward(new ArmFeedforward(0, 0, 0))
     .withStatorCurrentLimit(Current.ofBaseUnits(20, Amp))
@@ -57,7 +58,10 @@ public class IntakeSubsystem extends SubsystemBase {
     .withGearing(new MechanismGearing(GearBox.fromReductionStages(4,4,4,5,2)))
     .withIdleMode(MotorMode.BRAKE)
     .withClosedLoopRampRate(Seconds.of(0.25))
-    .withOpenLoopRampRate(Seconds.of(0.25));
+    .withOpenLoopRampRate(Seconds.of(0.25))
+    .withFollowers(new Pair<>(
+        new SparkMax(PortMap.INTAKE_EXTENDER_FOLLOWER_ID, MotorType.kBrushless),
+         true));
     
     
     private final SmartMotorController intakeExtenderController =

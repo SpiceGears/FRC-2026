@@ -33,6 +33,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
+import frc.robot.Constants.DrivebaseConstants;
 import frc.robot.subsystems.swervedrive.Vision.Cameras;
 import frc.robot.subsystems.vision.limelight.AprilTagVisionSubsystem;
 
@@ -108,9 +109,9 @@ public class SwerveSubsystem extends SubsystemBase
     swerveDrive.setModuleEncoderAutoSynchronize(false,
                                                 1); // Enable if you want to resynchronize your absolute encoders and motor encoders periodically when they are not moving.
     // swerveDrive.pushOffsetsToEncoders(); // Set the absolute encoder to be used over the internal encoder and push the offsets onto it. Throws warning if not possible
-    if (visionDriveTest)
+    if (DrivebaseConstants.USE_VISION)
     {
-      setupPhotonVision();
+      //setupPhotonVision();
       // Stop the odometry thread if we are using vision that way we can synchronize updates better.
       swerveDrive.stopOdometryThread();
     }
@@ -145,15 +146,23 @@ public class SwerveSubsystem extends SubsystemBase
   public void periodic()
   {
     // When vision is enabled we must manually update odometry in SwerveDrive
-    if (visionDriveTest)
+    if (DrivebaseConstants.USE_VISION)
     {
-      swerveDrive.updateOdometry();
+      
       Optional<Pose3d> visionPose = vision.getEstimatedPose();
       if (visionPose.isPresent())
       {
         swerveDrive.addVisionMeasurement(visionPose.get().toPose2d(), Timer.getFPGATimestamp());
       }
       //vision.updatePoseEstimation(swerveDrive);
+
+
+
+
+
+
+
+      swerveDrive.updateOdometry();
     }
   }
 
