@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems;
+package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Centimeter;
@@ -33,7 +33,7 @@ import yams.motorcontrollers.SmartMotorControllerConfig.MotorMode;
 import yams.motorcontrollers.SmartMotorControllerConfig.TelemetryVerbosity;
 import yams.motorcontrollers.local.SparkWrapper;
 
-public class ShooterSubsystem extends SubsystemBase {
+public class FlywheelSubsystem extends SubsystemBase {
   /** Creates a new ShooterSubsystem. */
   SmartMotorControllerConfig shooterMotorConfig = new SmartMotorControllerConfig(this)
   .withControlMode(ControlMode.CLOSED_LOOP)
@@ -76,7 +76,7 @@ public class ShooterSubsystem extends SubsystemBase {
   private AngularVelocity targetVelocity = Constants.ShooterConstats.INITIAL_TARGET_VELOCITY;
 
 
-  public ShooterSubsystem() {}
+  public FlywheelSubsystem() {}
 
   @Override
   public void periodic() {
@@ -100,24 +100,11 @@ public class ShooterSubsystem extends SubsystemBase {
     return shooter.getSpeed().isNear(targetVelocity, Constants.ShooterConstats.VELOCITY_TOLERANCE);
   }
 
-  private Command setVelocity(AngularVelocity velocity) 
+  public Command setVelocity(AngularVelocity velocity) 
   {
     return shooter.setSpeed(velocity);
   }
 
-  public Command toogleShooter() 
-  {
-    if (!shooterEnabled)
-    {
-      shooterEnabled = true;
-      return setVelocity(targetVelocity);
-    }
-    else
-    {
-      shooterEnabled = false;
-      return setVelocity(RPM.of(0));
-    }
-  }
 
   private void setVelocitySetpoint(AngularVelocity setpoint) 
   {

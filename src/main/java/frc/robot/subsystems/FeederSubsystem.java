@@ -6,8 +6,10 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Amp;
 import static edu.wpi.first.units.Units.Centimeter;
+import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Meter;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RPM;
 
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.revrobotics.spark.SparkMax;
@@ -28,6 +30,7 @@ public class FeederSubsystem extends SubsystemBase {
 
   private SmartMotorControllerConfig feederControllerConfig = new SmartMotorControllerConfig(this)
   .withControlMode(SmartMotorControllerConfig.ControlMode.CLOSED_LOOP)
+  .withClosedLoopController(5,0,0,RPM.of(6000), DegreesPerSecondPerSecond.of(90))
   .withMotorInverted(false)
   .withIdleMode(MotorMode.BRAKE)
   .withStatorCurrentLimit(Amp.of(20))

@@ -13,6 +13,7 @@ import static edu.wpi.first.units.Units.Seconds;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -20,6 +21,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.PortMap;
 import yams.gearing.GearBox;
 import yams.gearing.MechanismGearing;
 import yams.mechanisms.config.ElevatorConfig;
@@ -46,7 +48,14 @@ public class ClimbSubsystem extends SubsystemBase {
     .withIdleMode(MotorMode.COAST)
     .withStatorCurrentLimit(Amps.of(40))
     .withClosedLoopRampRate(Seconds.of(0.5))
-    .withOpenLoopRampRate(Seconds.of(0.5));
+    .withOpenLoopRampRate(Seconds.of(0.5))
+    .withFollowers(
+        new Pair<Object, Boolean>
+        (
+            new SparkMax(PortMap.ELEVATOR_FOLLOWER_MOTOR_ID, MotorType.kBrushless),
+            true
+        )
+    );
 
     private SparkMax climbMotor = new SparkMax(41, MotorType.kBrushless);
 

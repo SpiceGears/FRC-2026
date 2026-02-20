@@ -26,13 +26,15 @@ import frc.robot.commands.feeder.FeederFeedShooterCommand;
 import frc.robot.commands.intake.IntakeFuel;
 import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
-import frc.robot.subsystems.HoodSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.subsystems.ShooterPasserSubsystem;
-import frc.robot.subsystems.ShooterSubsystem;
+import frc.robot.subsystems.shooter.FlywheelSubsystem;
+import frc.robot.subsystems.shooter.HoodSubsystem;
+import frc.robot.subsystems.shooter.PasserSubsystem;
+import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.subsystems.vision.limelight.AprilTagVisionSubsystem;
 
+import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Degrees;
 
 import java.io.File;
@@ -117,11 +119,13 @@ public class RobotContainer
 
 
   final IntakeSubsystem intake = new IntakeSubsystem();
-  final ShooterSubsystem shooter = new ShooterSubsystem();
-  final FeederSubsystem feeder = new FeederSubsystem();
-  final ClimbSubsystem climb = new ClimbSubsystem();
-  final ShooterPasserSubsystem shooterPasser = new ShooterPasserSubsystem();
-  final HoodSubsystem hood = new HoodSubsystem();
+  //final FlywheelSubsystem shooterFlywheel = new FlywheelSubsystem();
+  //final FeederSubsystem feeder = new FeederSubsystem();
+  //final ClimbSubsystem climb = new ClimbSubsystem();
+  //final PasserSubsystem shooterPasser = new PasserSubsystem();
+  //final HoodSubsystem hood = new HoodSubsystem();
+
+  //final ShooterSubsystem shooter = new ShooterSubsystem(shooterFlywheel, shooterPasser, hood);
   public RobotContainer()
   {
     // Configure the trigger bindings
@@ -217,13 +221,18 @@ public class RobotContainer
     {
 
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
-      driverXbox.x().onTrue(shooter.toogleShooter());
-      driverXbox.start().onTrue(intake.setAngle(Degrees.of(90)));
+      //driverXbox.x().onTrue(shooter.start());
+      //driverXbox.y().onTrue(shooter.stop());
+      //driverXbox.start().onTrue(intake.setAngle(Degrees.of(90)));
       driverXbox.back().whileTrue(Commands.none());
-      driverXbox.leftBumper().whileTrue(Commands.runOnce(() -> hood.extendFull()));
+      //driverXbox.leftBumper().whileTrue(Commands.runOnce(() -> hood.extendFull()));
       //driverXbox.rightBumper().onTrue(Commands.none());
-      feeder.setDefaultCommand(new FeederFeedShooterCommand(feeder, driverXbox.rightBumper()));
+      //feeder.setDefaultCommand(new FeederFeedShooterCommand(feeder, driverXbox.rightBumper()));
+      
       driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));
+
+      driverXbox.povUp().onTrue(intake.setAngleAndStop(Degrees.of(50)));
+      driverXbox.povDown().onTrue(intake.setAngleAndStop(Degrees.of(-50)));
     }
 
   }

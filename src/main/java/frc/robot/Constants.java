@@ -101,6 +101,7 @@ public final class Constants
     public static final int SHOOTER_PASSER_MOTOR_ID = 34;
 
     public static final int ELEVATOR_MOTOR_ID = 41;
+    public static final int ELEVATOR_FOLLOWER_MOTOR_ID = 42;
 
 
     public static final int HOOD_LEFT_ACTUATOR_ANALOG_PORT = 1;
@@ -108,3 +109,4 @@ public final class Constants
 
   }
 }
+

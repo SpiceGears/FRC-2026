@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems;
+package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
@@ -26,9 +26,9 @@ import yams.motorcontrollers.SmartMotorControllerConfig.MotorMode;
 import yams.motorcontrollers.SmartMotorControllerConfig.TelemetryVerbosity;
 import yams.motorcontrollers.local.SparkWrapper;
 
-public class ShooterPasserSubsystem extends SubsystemBase {
+public class PasserSubsystem extends SubsystemBase {
 
-  public ShooterPasserSubsystem instance;
+  public PasserSubsystem instance;
 
   SmartMotorControllerConfig passerMotorConfig = new SmartMotorControllerConfig(this)
   .withControlMode(ControlMode.CLOSED_LOOP)
@@ -48,7 +48,7 @@ public class ShooterPasserSubsystem extends SubsystemBase {
 
   SmartMotorController passerController = new SparkWrapper(passerMotor, DCMotor.getNEO(1), passerMotorConfig);
   /** Creates a new ShooterPasserSubsystem. */
-  public ShooterPasserSubsystem() 
+  public PasserSubsystem() 
   {
     if (instance != null) {
       //throw new IllegalStateException("ShooterPasserSubsystem instance already exists!");
