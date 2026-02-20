@@ -131,7 +131,7 @@ public class RobotContainer
     // Configure the trigger bindings
     configureBindings();
 
-    //intake.setDefaultCommand(intake.setAngle(Degrees.of(-90)));
+    intake.setDefaultCommand(intake.setAngle(Degrees.of(-90)));
     DriverStation.silenceJoystickConnectionWarning(true);
     
     //Create the NamedCommands that will be used in PathPlanner
@@ -228,11 +228,12 @@ public class RobotContainer
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(() -> hood.extendFull()));
       //driverXbox.rightBumper().onTrue(Commands.none());
       //feeder.setDefaultCommand(new FeederFeedShooterCommand(feeder, driverXbox.rightBumper()));
+
       
       driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));
 
-      driverXbox.povUp().onTrue(intake.setAngleAndStop(Degrees.of(50)));
-      driverXbox.povDown().onTrue(intake.setAngleAndStop(Degrees.of(-50)));
+      driverXbox.povUp().onTrue(intake.setAngle(Degrees.of(0)));
+      driverXbox.povDown().onTrue(intake.setAngle(Degrees.of(-90)));
     }
 
   }

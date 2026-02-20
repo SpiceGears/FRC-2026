@@ -6,6 +6,7 @@ import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Kilogram;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Seconds;
 
 import com.revrobotics.PersistMode;
@@ -17,6 +18,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.ArmFeedforward;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
@@ -48,15 +50,15 @@ public class IntakeSubsystem extends SubsystemBase {
 
     private SmartMotorControllerConfig intakeExtenderConfig = new SmartMotorControllerConfig(this)
     .withControlMode(ControlMode.CLOSED_LOOP)
-    .withClosedLoopController(50, 0, 0, 
-    DegreesPerSecond.of(90), DegreesPerSecondPerSecond.of(45))
-    .withSimClosedLoopController(50, 0, 0, DegreesPerSecond.of(90), DegreesPerSecondPerSecond.of(45))
-    .withFeedforward(new ArmFeedforward(0, 0, 0))
+    .withClosedLoopController(5, 0, 0, 
+    DegreesPerSecond.of(360), DegreesPerSecondPerSecond.of(360))
+    .withSimClosedLoopController(5, 0, 0, DegreesPerSecond.of(9000), DegreesPerSecondPerSecond.of(45))
+    .withFeedforward(new SimpleMotorFeedforward(0, 10, 0))
     .withSimFeedforward(new ArmFeedforward(0, 0, 0))
     .withStatorCurrentLimit(Current.ofBaseUnits(20, Amp))
     .withTelemetry("IntakeExtender_MotorController", TelemetryVerbosity.HIGH)
-    .withMotorInverted(false)
-    .withGearing(new MechanismGearing(GearBox.fromStages("2:1")))
+    .withMotorInverted(true)
+    .withGearing(new MechanismGearing(GearBox.fromStages("4:1","4:1","5:1", "34:16")))
     .withIdleMode(MotorMode.BRAKE)
     .withClosedLoopRampRate(Seconds.of(0.25))
     .withOpenLoopRampRate(Seconds.of(0.25))
