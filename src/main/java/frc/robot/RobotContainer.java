@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.feeder.FeederFeedShooterCommand;
 import frc.robot.commands.intake.IntakeFuel;
+import frc.robot.commands.shooter.ShooterCycleCommand;
 import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
@@ -219,16 +220,17 @@ public class RobotContainer
       driverXbox.rightBumper().onTrue(Commands.none());
     } else
     {
-      
+
       intake.setDefaultCommand(intake.setAngleCmd(Degrees.of(-90)));
+      shooter.setDefaultCommand(new ShooterCycleCommand(shooter));
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
-      driverXbox.x().onTrue(shooter.toggleEnabled());
+      driverXbox.x().onTrue(shooter.toggleEnabledCmd());
       //driverXbox.y().onTrue(shooter.stop());
       //driverXbox.start().onTrue(intake.setAngle(Degrees.of(90)));
       driverXbox.back().whileTrue(Commands.none());
       //driverXbox.leftBumper().whileTrue(Commands.runOnce(() -> hood.extendFull()));
       //driverXbox.rightBumper().onTrue(Commands.none());
-      //feeder.setDefaultCommand(new FeederFeedShooterCommand(feeder, driverXbox.rightBumper()));
+      feeder.setDefaultCommand(new FeederFeedShooterCommand(feeder, driverXbox.rightBumper()));
 
       
       driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));

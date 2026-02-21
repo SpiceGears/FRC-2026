@@ -17,9 +17,9 @@ public class ShooterSubsystem extends SubsystemBase {
   /** Creates a new ShooterSubsystem. */
 
 
-  final FlywheelSubsystem flywheel;
-  final PasserSubsystem passer;
-  final HoodSubsystem hood;
+  public final FlywheelSubsystem flywheel;
+  public final PasserSubsystem passer;
+  public final HoodSubsystem hood;
 
   double currentFlywheelKey = 1.0;
   double currentHoodKey = 1.0;
@@ -81,16 +81,24 @@ public class ShooterSubsystem extends SubsystemBase {
 
   public void applyParameters() 
   {
-    double flywheelRPM = flywheelRPMMap.get(currentFlywheelKey);
-    double hoodPosition = hoodPositionMap.get(currentHoodKey);
-
-    flywheel.setVelocity(RPM.of(flywheelRPM));
-    hood.setLenghtMM(hoodPosition);
-
+    applyFlywheelParameter();
+    applyHoodParameter();
     // return Commands.parallel(
     //   flywheelCmd,
     //   hoodCmd
     // );
+  }
+
+  public void applyFlywheelParameter() 
+  {
+    double flywheelRPM = flywheelRPMMap.get(currentFlywheelKey);
+    flywheel.setVelocity(RPM.of(flywheelRPM));
+  }
+
+  public void applyHoodParameter() 
+  {
+    double hoodPosition = hoodPositionMap.get(currentHoodKey);
+    hood.setLenghtMM(hoodPosition);
   }
 
   public Command startCmd() 
@@ -132,13 +140,26 @@ public class ShooterSubsystem extends SubsystemBase {
     });
   }
 
-  public Command toggleEnabled() 
+  public Command toggleEnabledCmd() 
   {
     return runOnce(() -> 
     {
+      toggleEnabled();
+    });
+  }
+
+  public void adjustHood(double addedKey) 
+  {
+    currentHoodKey += addedKey;
+    currentHoodKey = MathUtil.clamp(currentHoodKey, 0, 1);
+    setHoodParameter(currentHoodKey);
+    applyParameters();
+  }
+
+  public void toggleEnabled() 
+  {
       if (!enabled) start();
       else stop();
-    });
   }
 
   public boolean isEnabled() 
