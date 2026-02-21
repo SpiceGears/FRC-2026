@@ -116,9 +116,11 @@ public class IntakeSubsystem extends SubsystemBase {
         intakeMaster.setVoltage(volts);
     }
 
-    public Command setAngle(Angle angle) { return intakeExtender.run(angle);}
+    public Command setAngleCmd(Angle angle) { return intakeExtender.run(angle);}
 
-    public Command setAngleAndStop(Angle angle) { return intakeExtender.runTo(angle, Degrees.of(0));}
+    public Command setAngleAndStopCmd(Angle angle) { return intakeExtender.runTo(angle, Degrees.of(0));}
+
+    public void setAngle(Angle angle) {intakeExtender.setMechanismPositionSetpoint(angle);}
 
     @Override
     public void periodic() 
@@ -129,5 +131,13 @@ public class IntakeSubsystem extends SubsystemBase {
     @Override
     public void simulationPeriodic() {
         intakeExtender.simIterate();
+    }
+
+    public Command adjustIntake(Angle adjustment) 
+    {
+      return runOnce(() -> 
+      {
+        setAngle(this.getAngle().plus(adjustment));
+      });
     }
 }

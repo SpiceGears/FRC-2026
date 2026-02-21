@@ -24,6 +24,8 @@ public class ShooterSubsystem extends SubsystemBase {
   double currentFlywheelKey = 1.0;
   double currentHoodKey = 1.0;
 
+  boolean enabled = false;
+
 
   InterpolatingDoubleTreeMap flywheelRPMMap = new InterpolatingDoubleTreeMap();
   InterpolatingDoubleTreeMap hoodPositionMap = new InterpolatingDoubleTreeMap();
@@ -69,28 +71,78 @@ public class ShooterSubsystem extends SubsystemBase {
     currentHoodKey = key;
   }
 
-  public Command applyParameters() 
+  public Command setFlywheelParametersCommand(double key) 
+  {
+    return runOnce(() -> 
+    {
+      this.setFlywheelParameter(key);
+    });
+  }
+
+  public void applyParameters() 
   {
     double flywheelRPM = flywheelRPMMap.get(currentFlywheelKey);
     double hoodPosition = hoodPositionMap.get(currentHoodKey);
 
-    Command flywheelCmd = flywheel.setVelocity(RPM.of(flywheelRPM));
-    Command hoodCmd = Commands.run(() -> hood.setLenghtMM(hoodPosition), hood);
+    flywheel.setVelocity(RPM.of(flywheelRPM));
+    hood.setLenghtMM(hoodPosition);
 
-    return Commands.parallel(
-      flywheelCmd,
-      hoodCmd
-    );
+    // return Commands.parallel(
+    //   flywheelCmd,
+    //   hoodCmd
+    // );
   }
 
-  public Command start() 
+  public Command startCmd() 
   {
-    return applyParameters();
+    // return setFlywheelParametersCommand(0.95).andThen(applyParameters());
+    return runOnce(() -> 
+    {
+      // this.enabled = true;
+      // setFlywheelParameter(0.95);
+      // applyParameters();
+      start();
+    });
   }
 
-  public Command stop() 
+  public void start() 
   {
-    setFlywheelParameter(0);
-    return applyParameters();
+    this.enabled = true;
+    setFlywheelParameter(0.95);
+    applyParameters();
+  }
+
+  public void stop() 
+  {
+    this.enabled = false;
+    setFlywheelParameter(0.0);
+    applyParameters();
+  }
+
+  public Command stopCmd() 
+  {
+
+    // return setFlywheelParametersCommand(0).andThen(applyParameters());
+    return runOnce(() -> 
+    {
+      // this.enabled = false;
+      // setFlywheelParameter(0.0);
+      // applyParameters();
+      stop();
+    });
+  }
+
+  public Command toggleEnabled() 
+  {
+    return runOnce(() -> 
+    {
+      if (!enabled) start();
+      else stop();
+    });
+  }
+
+  public boolean isEnabled() 
+  {
+    return this.enabled;
   }
 }

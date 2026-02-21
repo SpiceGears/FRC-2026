@@ -12,9 +12,14 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RPM;
 
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -28,21 +33,28 @@ import yams.motorcontrollers.local.SparkWrapper;
 
 public class FeederSubsystem extends SubsystemBase {
 
-  private SmartMotorControllerConfig feederControllerConfig = new SmartMotorControllerConfig(this)
-  .withControlMode(SmartMotorControllerConfig.ControlMode.CLOSED_LOOP)
-  .withClosedLoopController(5,0,0,RPM.of(6000), DegreesPerSecondPerSecond.of(90))
-  .withMotorInverted(false)
-  .withIdleMode(MotorMode.BRAKE)
-  .withStatorCurrentLimit(Amp.of(20))
-  .withGearing(1)
-  .withTelemetry("FeederMotor", TelemetryVerbosity.LOW);
+  // private SmartMotorControllerConfig feederControllerConfig = new SmartMotorControllerConfig(this)
+  // .withControlMode(SmartMotorControllerConfig.ControlMode.CLOSED_LOOP)
+  // .withClosedLoopController(5,0,0,RPM.of(6000), DegreesPerSecondPerSecond.of(90))
+  // .withMotorInverted(false)
+  // .withIdleMode(MotorMode.BRAKE)
+  // .withStatorCurrentLimit(Amp.of(20))
+  // .withGearing(1)
+  // .withTelemetry("FeederMotor", TelemetryVerbosity.LOW);
   private SparkMax feederMotor = new SparkMax(PortMap.FEEDER_MOTOR_ID, MotorType.kBrushed);
+  private SparkMaxConfig feederMotorConfig = new SparkMaxConfig();
 
-  private SmartMotorController feederController = new SparkWrapper(feederMotor, DCMotor.getVex775Pro(1), feederControllerConfig);
+  //private SmartMotorController feederController = new SparkWrapper(feederMotor, DCMotor.getVex775Pro(1), feederControllerConfig);
 
   /** Creates a new FeederSubsystem. */
   public FeederSubsystem() 
   {
+    feederMotorConfig
+    .inverted(false)
+    .smartCurrentLimit(20)
+    .idleMode(IdleMode.kCoast);
+
+    feederMotor.configure(feederMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 
   @Override
@@ -53,12 +65,14 @@ public class FeederSubsystem extends SubsystemBase {
 
   public void feedShooter(double speed) 
   {
-    feederController.setVelocity(MetersPerSecond.of(Meter.convertFrom(speed, Centimeter)));
+    // feederController.setVelocity(MetersPerSecond.of(Meter.convertFrom(speed, Centimeter)));
+    feederMotor.set(MathUtil.clamp(speed, -1, 1));
   }
 
   public void stop() 
   {
     //set desired duty cycle to 0, effectively stopping the mechanism
-    feederController.setDutyCycle(0);
+    //feederController.setDutyCycle(0);
+    feederMotor.setVoltage(0);
   }
 }

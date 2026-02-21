@@ -119,19 +119,19 @@ public class RobotContainer
 
 
   final IntakeSubsystem intake = new IntakeSubsystem();
-  //final FlywheelSubsystem shooterFlywheel = new FlywheelSubsystem();
-  //final FeederSubsystem feeder = new FeederSubsystem();
+  final FlywheelSubsystem shooterFlywheel = new FlywheelSubsystem();
+  final FeederSubsystem feeder = new FeederSubsystem();
   //final ClimbSubsystem climb = new ClimbSubsystem();
-  //final PasserSubsystem shooterPasser = new PasserSubsystem();
-  //final HoodSubsystem hood = new HoodSubsystem();
+  final PasserSubsystem shooterPasser = new PasserSubsystem();
+  final HoodSubsystem hood = new HoodSubsystem();
 
-  //final ShooterSubsystem shooter = new ShooterSubsystem(shooterFlywheel, shooterPasser, hood);
+  final ShooterSubsystem shooter = new ShooterSubsystem(shooterFlywheel, shooterPasser, hood);
   public RobotContainer()
   {
     // Configure the trigger bindings
     configureBindings();
 
-    intake.setDefaultCommand(intake.setAngle(Degrees.of(-90)));
+    
     DriverStation.silenceJoystickConnectionWarning(true);
     
     //Create the NamedCommands that will be used in PathPlanner
@@ -219,9 +219,10 @@ public class RobotContainer
       driverXbox.rightBumper().onTrue(Commands.none());
     } else
     {
-
+      
+      intake.setDefaultCommand(intake.setAngleCmd(Degrees.of(-90)));
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
-      //driverXbox.x().onTrue(shooter.start());
+      driverXbox.x().onTrue(shooter.toggleEnabled());
       //driverXbox.y().onTrue(shooter.stop());
       //driverXbox.start().onTrue(intake.setAngle(Degrees.of(90)));
       driverXbox.back().whileTrue(Commands.none());
@@ -232,11 +233,13 @@ public class RobotContainer
       
       driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));
 
-      driverXbox.povUp().onTrue(intake.setAngle(Degrees.of(0)));
-      driverXbox.povDown().onTrue(intake.setAngle(Degrees.of(-90)));
+      driverXbox.povUp().onTrue(intake.adjustIntake(Degrees.of(5)));
+      driverXbox.povDown().onTrue(intake.adjustIntake(Degrees.of(-5)));
     }
 
   }
+
+  
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
