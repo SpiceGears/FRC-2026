@@ -13,7 +13,7 @@ public class IntakeFuel extends Command {
 
     @Override
     public void initialize() {
-        intakeSubsystem.setIntakePower(0.5);
+        intakeSubsystem.setIntakePower(1.0);
     }
 
     @Override

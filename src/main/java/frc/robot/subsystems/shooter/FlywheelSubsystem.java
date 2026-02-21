@@ -10,6 +10,7 @@ import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Volt;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
@@ -18,6 +19,8 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Velocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -38,8 +41,10 @@ public class FlywheelSubsystem extends SubsystemBase {
   SmartMotorControllerConfig shooterMotorConfig = new SmartMotorControllerConfig(this)
   .withControlMode(ControlMode.CLOSED_LOOP)
   .withClosedLoopController(
-    50, 0, 0, RPM.of(6000), DegreesPerSecondPerSecond.of(75))
-  .withFeedforward(new SimpleMotorFeedforward(0, 0)
+    0.02, 0, 0
+    // RPM.of(6000), DegreesPerSecondPerSecond.of(720)
+    )
+  .withFeedforward(new SimpleMotorFeedforward(0.05, 0.11, 0.05)
   ).withSimFeedforward(new SimpleMotorFeedforward(0, 0))
   .withTelemetry("ShooterMotor", TelemetryVerbosity.MID)
   .withGearing(new MechanismGearing(GearBox.fromReductionStages(1)))
@@ -66,6 +71,7 @@ public class FlywheelSubsystem extends SubsystemBase {
   .withDiameter(Centimeter.of(10))
   .withMass(Kilograms.of(1.5))
   .withUpperSoftLimit(RPM.of(6000))
+  .withLowerSoftLimit(RPM.of(0))
   .withTelemetry("ShooterMechanism", TelemetryVerbosity.HIGH);
   
 
@@ -75,6 +81,7 @@ public class FlywheelSubsystem extends SubsystemBase {
 
   private AngularVelocity targetVelocity = Constants.ShooterConstats.INITIAL_TARGET_VELOCITY;
 
+  public void setTargetVelocity(AngularVelocity target) { this.targetVelocity = target;}
 
   public FlywheelSubsystem() {}
 
@@ -106,8 +113,27 @@ public class FlywheelSubsystem extends SubsystemBase {
   }
 
 
-  private void setVelocitySetpoint(AngularVelocity setpoint) 
+
+  public void setVelocitySetpoint(AngularVelocity setpoint) 
   {
+    // shooter.getMotorController().startClosedLoopController();
+    shooter.setMechanismVelocitySetpoint(setpoint);
+  }
+
+  public void setVoltage(Voltage volts) 
+  {
+    shooter.setVoltageSetpoint(volts);
+  }
+
+  public void stopControl() 
+  {
+    // shooter.getMotorController().setContro();
+    setVoltage(Volt.of(0));
+  }
+
+  public void spinUpToVelocity(AngularVelocity setpoint) 
+  {
+    shooter.getMotorController().startClosedLoopController();
     shooter.setMechanismVelocitySetpoint(setpoint);
   }
 

@@ -67,7 +67,7 @@ public class RobotContainer
   SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
                                                                 () -> driverXbox.getLeftY() * -1,
                                                                 () -> driverXbox.getLeftX() * -1)
-                                                            .withControllerRotationAxis(driverXbox::getRightX)
+                                                            .withControllerRotationAxis(() -> driverXbox.getRightX() * -1)
                                                             .deadband(OperatorConstants.DEADBAND)
                                                             .scaleTranslation(0.8)
                                                             .allianceRelativeControl(true);
@@ -221,7 +221,7 @@ public class RobotContainer
     } else
     {
 
-      intake.setDefaultCommand(intake.setAngleCmd(Degrees.of(90)));
+      //intake.setDefaultCommand(intake.setAngleCmd(Degrees.of(90)));
       shooter.setDefaultCommand(new ShooterCycleCommand(shooter));
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       driverXbox.x().onTrue(shooter.toggleEnabledCmd());
@@ -234,11 +234,17 @@ public class RobotContainer
 
       
       driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));
+      
+      
+      driverXbox.leftBumper().whileTrue(shooter.passFuelToShooter());
+      driverXbox.leftTrigger(0.1).whileTrue(shooterPasser.passShooter(() -> -1));
+      // driverXbox.povUp().onTrue(intake.adjustIntake(Degrees.of(5)));
+      // driverXbox.povDown().onTrue(intake.adjustIntake(Degrees.of(-5)));
 
-      driverXbox.povUp().onTrue(intake.adjustIntake(Degrees.of(5)));
-      driverXbox.povDown().onTrue(intake.adjustIntake(Degrees.of(-5)));
-      driverXbox.povRight().onTrue(intake.setAngleCmd(Degrees.of(70)));
-      driverXbox.povLeft().onTrue(intake.setAngleCmd(Degrees.of(90)));
+      driverXbox.povUp().onTrue(Commands.runOnce(() -> shooter.adjustHood(0.1), shooter));
+      driverXbox.povDown().onTrue(Commands.runOnce(() -> shooter.adjustHood(-0.1), shooter));
+      // driverXbox.povRight().onTrue(intake.setAngleCmd(Degrees.of(70)));
+      // driverXbox.povLeft().onTrue(intake.setAngleCmd(Degrees.of(90)));
     }
 
   }

@@ -10,6 +10,7 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
@@ -95,6 +96,16 @@ public class PasserSubsystem extends SubsystemBase {
     //passerController.setVelocity(speed);
   }
 
+  public Command passShooter(DoubleSupplier speed) 
+  {
+    return runEnd(
+      () -> 
+      {
+        setPassingSpeed(speed.getAsDouble());
+      }, 
+      () -> {setPassingSpeed(0);});
+  }
+
   public void stopPasser() 
   {
     //passerController.setDutyCycle(0);
@@ -105,7 +116,7 @@ public class PasserSubsystem extends SubsystemBase {
   {
       if (enabled.getAsBoolean()) 
       {
-        this.setPassingSpeed(0.90);
+        this.setPassingSpeed(1.00);
       } else 
       {
         this.stopPasser();

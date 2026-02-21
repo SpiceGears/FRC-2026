@@ -53,11 +53,11 @@ public class IntakeSubsystem extends SubsystemBase {
 
     private SmartMotorControllerConfig intakeExtenderConfig = new SmartMotorControllerConfig(this)
     .withControlMode(ControlMode.CLOSED_LOOP)
-    .withClosedLoopController(20, 0, 0, 
-    DegreesPerSecond.of(360), DegreesPerSecondPerSecond.of(360))
+    .withClosedLoopController(1, 0, 0, 
+    DegreesPerSecond.of(720), DegreesPerSecondPerSecond.of(720))
     .withSimClosedLoopController(5, 0, 0, DegreesPerSecond.of(9000), DegreesPerSecondPerSecond.of(45))
-    .withFeedforward(new ArmFeedforward(0, 0.8, 0))
-    .withSimFeedforward(new ArmFeedforward(0, 0, 0))
+    .withFeedforward(new ArmFeedforward(0.65, 0.0, 0))
+    // .withSimFeedforward(new ArmFeedforward(0, 0, 0))
     .withStatorCurrentLimit(Current.ofBaseUnits(20, Amp))
     .withTelemetry("IntakeExtender_MotorController", TelemetryVerbosity.HIGH)
     .withMotorInverted(false)
@@ -65,6 +65,7 @@ public class IntakeSubsystem extends SubsystemBase {
     .withIdleMode(MotorMode.BRAKE)
     .withClosedLoopRampRate(Seconds.of(0.25))
     .withOpenLoopRampRate(Seconds.of(0.25))
+    //.withSoftLimit(Degrees.of(-5), Degrees.of(95))
     .withFollowers(new Pair<>(
         new SparkMax(PortMap.INTAKE_EXTENDER_FOLLOWER_ID, MotorType.kBrushless),
          true));
@@ -76,7 +77,7 @@ public class IntakeSubsystem extends SubsystemBase {
      intakeExtenderConfig);
 
     private final ArmConfig intakeExtenderMechanismConfig = new ArmConfig(intakeExtenderController)
-    .withSoftLimits(Degrees.of(-4), Degrees.of(90))
+    //.withSoftLimits(Degrees.of(-5), Degrees.of(95))
     //.withHardLimit(Degrees.of(-10), Degrees.of(100))
     .withStartingPosition(Degrees.of(90))
     .withLength(Meters.of(0.5)).withMass(Kilogram.of(1.2))
@@ -93,13 +94,13 @@ public class IntakeSubsystem extends SubsystemBase {
         intakeMasterConfig.voltageCompensation(12)
         .smartCurrentLimit(20)
         .idleMode(IdleMode.kBrake)
-        .inverted(true);
+        .inverted(false);
 
         //intakeMaster.configure(intakeMasterConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     public void setIntakePower(double power) {
-        intakeMaster.set(power);
+        intakeMaster.set(power * -1);
     }
 
     public Angle getAngle() 
@@ -117,11 +118,9 @@ public class IntakeSubsystem extends SubsystemBase {
         {
             setIntakePower(INTAKE_SPEED * powerMultiplier);
         },
-        () -> 
-        {
-            stopIntake();
-        },
-        this).withName("Intake.RunRollers");
+        () -> { stopIntake(); },
+        this)
+        .withName("Intake.RunRollers");
     }
 
     public double getIntakePower() {

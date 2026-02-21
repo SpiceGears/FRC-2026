@@ -32,7 +32,7 @@ public class FeederFeedShooterCommand extends Command {
   {
     if (feederEnabled.getAsBoolean()) 
     {
-      feeder.feedShooter(0.5);
+      feeder.feedShooter(0.8);
     }
     else 
     {

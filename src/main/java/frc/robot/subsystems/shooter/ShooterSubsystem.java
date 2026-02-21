@@ -6,9 +6,12 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.RPM;
 
+import java.util.function.BooleanSupplier;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -51,6 +54,10 @@ public class ShooterSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
+    SmartDashboard.putBoolean("shooterEnabled", enabled);
+    SmartDashboard.putNumber("shooterTargetRPM", flywheelRPMMap.get(currentFlywheelKey));
+    SmartDashboard.putNumber("shooterHoodMM", hoodPositionMap.get(currentHoodKey));
+    SmartDashboard.putNumber("shooterFlywheelInterpolationMapKey", currentFlywheelKey);
     // This method will be called once per scheduler run
   }
 
@@ -91,8 +98,12 @@ public class ShooterSubsystem extends SubsystemBase {
 
   public void applyFlywheelParameter() 
   {
-    double flywheelRPM = flywheelRPMMap.get(currentFlywheelKey);
-    flywheel.setVelocity(RPM.of(flywheelRPM));
+    if (currentFlywheelKey > 0.0) {
+      double flywheelRPM = flywheelRPMMap.get(currentFlywheelKey);
+      this.flywheel.setTargetVelocity(RPM.of(flywheelRPM));
+      flywheel.spinUpToVelocity(RPM.of(flywheelRPM));
+    }
+    else flywheel.stopControl();
   }
 
   public void applyHoodParameter() 
@@ -101,17 +112,6 @@ public class ShooterSubsystem extends SubsystemBase {
     hood.setLenghtMM(hoodPosition);
   }
 
-  public Command startCmd() 
-  {
-    // return setFlywheelParametersCommand(0.95).andThen(applyParameters());
-    return runOnce(() -> 
-    {
-      // this.enabled = true;
-      // setFlywheelParameter(0.95);
-      // applyParameters();
-      start();
-    });
-  }
 
   public void start() 
   {
@@ -153,13 +153,20 @@ public class ShooterSubsystem extends SubsystemBase {
     currentHoodKey += addedKey;
     currentHoodKey = MathUtil.clamp(currentHoodKey, 0, 1);
     setHoodParameter(currentHoodKey);
-    applyParameters();
+    applyHoodParameter();
   }
 
   public void toggleEnabled() 
   {
       if (!enabled) start();
       else stop();
+  }
+
+  public Command passFuelToShooter() 
+  {
+    return runEnd(() -> this.passer.passFuelToShooter(() -> true), 
+    () -> this.passer.passFuelToShooter(() -> false)
+    );
   }
 
   public boolean isEnabled() 

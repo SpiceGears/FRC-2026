@@ -50,7 +50,7 @@ public class FeederSubsystem extends SubsystemBase {
   public FeederSubsystem() 
   {
     feederMotorConfig
-    .inverted(false)
+    .inverted(true)
     .smartCurrentLimit(20)
     .idleMode(IdleMode.kCoast);
 
