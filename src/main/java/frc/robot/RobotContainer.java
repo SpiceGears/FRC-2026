@@ -221,7 +221,7 @@ public class RobotContainer
     } else
     {
 
-      intake.setDefaultCommand(intake.setAngleCmd(Degrees.of(-90)));
+      intake.setDefaultCommand(intake.setAngleCmd(Degrees.of(90)));
       shooter.setDefaultCommand(new ShooterCycleCommand(shooter));
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       driverXbox.x().onTrue(shooter.toggleEnabledCmd());
@@ -237,6 +237,8 @@ public class RobotContainer
 
       driverXbox.povUp().onTrue(intake.adjustIntake(Degrees.of(5)));
       driverXbox.povDown().onTrue(intake.adjustIntake(Degrees.of(-5)));
+      driverXbox.povRight().onTrue(intake.setAngleCmd(Degrees.of(70)));
+      driverXbox.povLeft().onTrue(intake.setAngleCmd(Degrees.of(90)));
     }
 
   }

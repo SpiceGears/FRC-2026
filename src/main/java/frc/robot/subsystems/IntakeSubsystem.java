@@ -25,6 +25,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.PortMap;
@@ -45,19 +46,21 @@ import yams.motorcontrollers.local.SparkWrapper;
 public class IntakeSubsystem extends SubsystemBase {
     private PWMSparkMax intakeMaster;
 
+    final double INTAKE_SPEED = 1.0;
+
     private SparkMax intakeExtenderMotor = new SparkMax(Constants.PortMap.INTAKE_EXTENDER_ID, MotorType.kBrushless);
 
 
     private SmartMotorControllerConfig intakeExtenderConfig = new SmartMotorControllerConfig(this)
     .withControlMode(ControlMode.CLOSED_LOOP)
-    .withClosedLoopController(5, 0, 0, 
+    .withClosedLoopController(20, 0, 0, 
     DegreesPerSecond.of(360), DegreesPerSecondPerSecond.of(360))
     .withSimClosedLoopController(5, 0, 0, DegreesPerSecond.of(9000), DegreesPerSecondPerSecond.of(45))
-    .withFeedforward(new SimpleMotorFeedforward(0, 10, 0))
+    .withFeedforward(new ArmFeedforward(0, 0.8, 0))
     .withSimFeedforward(new ArmFeedforward(0, 0, 0))
     .withStatorCurrentLimit(Current.ofBaseUnits(20, Amp))
     .withTelemetry("IntakeExtender_MotorController", TelemetryVerbosity.HIGH)
-    .withMotorInverted(true)
+    .withMotorInverted(false)
     .withGearing(new MechanismGearing(GearBox.fromStages("4:1","4:1","5:1", "34:16")))
     .withIdleMode(MotorMode.BRAKE)
     .withClosedLoopRampRate(Seconds.of(0.25))
@@ -73,9 +76,9 @@ public class IntakeSubsystem extends SubsystemBase {
      intakeExtenderConfig);
 
     private final ArmConfig intakeExtenderMechanismConfig = new ArmConfig(intakeExtenderController)
-    //.withSoftLimits(Degrees.of(-90), Degrees.of(90))
-    //.withHardLimit(Degrees.of(-91), Degrees.of(91))
-    .withStartingPosition(Degrees.of(-90))
+    .withSoftLimits(Degrees.of(-4), Degrees.of(90))
+    //.withHardLimit(Degrees.of(-10), Degrees.of(100))
+    .withStartingPosition(Degrees.of(90))
     .withLength(Meters.of(0.5)).withMass(Kilogram.of(1.2))
     .withTelemetry("IntakeExtender", TelemetryVerbosity.HIGH);
 
@@ -106,6 +109,19 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public void stopIntake() {
         intakeMaster.stopMotor();
+    }
+
+    public Command runIntakeCommand(double powerMultiplier) 
+    {
+        return Commands.runEnd(() -> 
+        {
+            setIntakePower(INTAKE_SPEED * powerMultiplier);
+        },
+        () -> 
+        {
+            stopIntake();
+        },
+        this).withName("Intake.RunRollers");
     }
 
     public double getIntakePower() {

@@ -79,7 +79,7 @@ public class ShooterSubsystem extends SubsystemBase {
     });
   }
 
-  public void applyParameters() 
+  public void applyParameters()
   {
     applyFlywheelParameter();
     applyHoodParameter();
