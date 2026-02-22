@@ -75,8 +75,8 @@ public class AprilTagVisionSubsystem extends SubsystemBase {
     //SmartDashboard.putData("AprilTagVisionSubsystem/Estimated Pose2D", instance.getEstimatedPose2d());
     Optional<Pose2d> estimatedPose2d = instance.getEstimatedPose2d();
     if (estimatedPose2d.isPresent()) {
-    field.setRobotPose(estimatedPose2d.get());
-    SmartDashboard.putData("Vision Estimated pose",field);
+      field.setRobotPose(estimatedPose2d.get());
+      SmartDashboard.putData("Vision Estimated pose",field);
     }
     // This method will be called once per scheduler run
   }

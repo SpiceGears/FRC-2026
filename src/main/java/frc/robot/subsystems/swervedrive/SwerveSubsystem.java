@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems.swervedrive;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meter;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
@@ -120,8 +121,8 @@ public class SwerveSubsystem extends SubsystemBase
     }
     setupPathPlanner();
 
-    //SwerveIMU imu = swerveDrive.getGyro();
-    //imu.setOffset(new Rotation3d());
+
+    addGyroOffsets();
   }
 
   /**
@@ -586,6 +587,20 @@ public class SwerveSubsystem extends SubsystemBase
   public void zeroGyro()
   {
     swerveDrive.zeroGyro();
+    addGyroOffsets(); // to counter anti-inversing of the gyro
+  }
+
+  public void addGyroOffsets() 
+  {
+    //since our IMU is upside down, we add offsets to it, so it is again "wheels to the floor"
+    SwerveIMU imu = swerveDrive.getGyro();
+    imu.setOffset(new Rotation3d(
+      Degrees.of(180), //roll
+      Degrees.of(0), //pitch
+      Degrees.of(0) // yaw
+      ).plus(imu.getRawRotation3d())
+
+    );
   }
 
   /**
