@@ -27,7 +27,6 @@ public class LEDSubsystem extends SubsystemBase {
     private final PWM controller = new PWM(3);
 
     private final SendableChooser<LedColor> colorChooser = new SendableChooser<>();
-    private boolean useDashboardControl = true;
 
     public LEDSubsystem() {
         controller.setBoundsMicroseconds(2000, 1501, 1500, 1499, 1000);

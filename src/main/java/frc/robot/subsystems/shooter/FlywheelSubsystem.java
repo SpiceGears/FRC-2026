@@ -41,10 +41,10 @@ public class FlywheelSubsystem extends SubsystemBase {
   SmartMotorControllerConfig shooterMotorConfig = new SmartMotorControllerConfig(this)
   .withControlMode(ControlMode.CLOSED_LOOP)
   .withClosedLoopController(
-    0.02, 0, 0
+    0.3, 0, 0 //bylo 0.02
     // RPM.of(6000), DegreesPerSecondPerSecond.of(720)
     )
-  .withFeedforward(new SimpleMotorFeedforward(0.05, 0.11, 0.05)
+  .withFeedforward(new SimpleMotorFeedforward(0.05, 0.20, 0.05) //kv = 0.11 bylo
   ).withSimFeedforward(new SimpleMotorFeedforward(0, 0))
   .withTelemetry("ShooterMotor", TelemetryVerbosity.MID)
   .withGearing(new MechanismGearing(GearBox.fromReductionStages(1)))
@@ -76,8 +76,6 @@ public class FlywheelSubsystem extends SubsystemBase {
   
 
   private FlyWheel shooter = new FlyWheel(shooterMechanismConfig);
-
-  private boolean shooterEnabled = false;
 
   private AngularVelocity targetVelocity = Constants.ShooterConstats.INITIAL_TARGET_VELOCITY;
 

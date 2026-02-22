@@ -9,8 +9,6 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Seconds;
 
-import com.revrobotics.PersistMode;
-import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -31,9 +29,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.PortMap;
 import yams.gearing.GearBox;
 import yams.gearing.MechanismGearing;
-import yams.gearing.Sprocket;
-//import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
-import yams.mechanisms.SmartMechanism;
+//import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity
 import yams.mechanisms.config.ArmConfig;
 import yams.mechanisms.positional.Arm;
 import yams.motorcontrollers.SmartMotorController;

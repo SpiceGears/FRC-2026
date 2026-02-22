@@ -6,6 +6,8 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -141,6 +143,9 @@ public class RobotContainer
     
     //Create the NamedCommands that will be used in PathPlanner
     NamedCommands.registerCommand("test", Commands.print("I EXIST"));
+    NamedCommands.registerCommand("shoot", shooter.shoot(feeder, leds, 5500).withTimeout(3));
+    NamedCommands.registerCommand("shootLong", shooter.shoot(feeder, leds, 5000).withTimeout(10));
+
 
     //Have the autoChooser pull in all PathPlanner autos as options
     autoChooser = AutoBuilder.buildAutoChooser();
@@ -150,6 +155,8 @@ public class RobotContainer
 
     //Add a simple auto option to have the robot drive forward for 1 second then stop
     autoChooser.addOption("Drive Forward", drivebase.driveForward().withTimeout(1));
+
+    autoChooser.addOption("Forward", drivebase.getAutonomousCommand("test"));
     
     //Put the autoChooser on the SmartDashboard
     SmartDashboard.putData("Auto Chooser", autoChooser);
@@ -228,7 +235,8 @@ public class RobotContainer
       //intake.setDefaultCommand(intake.setAngleCmd(Degrees.of(90)));
       shooter.setDefaultCommand(new ShooterCycleCommand(shooter));
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
-      driverXbox.x().onTrue(shooter.toggleEnabledCmd());
+      //driverXbox.x().onTrue(shooter.toggleEnabledCmd());
+      driverXbox.x().whileTrue(shooter.shoot(feeder, leds, 5500));
       //driverXbox.y().onTrue(shooter.stop());
       //driverXbox.start().onTrue(intake.setAngle(Degrees.of(90)));
       driverXbox.back().whileTrue(Commands.none());
@@ -250,7 +258,7 @@ public class RobotContainer
       // driverXbox.povRight().onTrue(intake.setAngleCmd(Degrees.of(70)));
       // driverXbox.povLeft().onTrue(intake.setAngleCmd(Degrees.of(90)));
       leds.setDefaultCommand(leds.getDefaultDashboardCommand());
-      driverXbox.rightBumper().whileTrue(leds.setColorCommand(LedColor.BLUE));
+      driverXbox.leftBumper().whileTrue(leds.setColorCommand(LedColor.BLUE));
     }
 
   }

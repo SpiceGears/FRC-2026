@@ -6,15 +6,15 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.RPM;
 
-import java.util.function.BooleanSupplier;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.FeederSubsystem;
+import frc.robot.subsystems.led.LEDSubsystem;
+import frc.robot.subsystems.led.LEDSubsystem.LedColor;
 
 public class ShooterSubsystem extends SubsystemBase {
   /** Creates a new ShooterSubsystem. */
@@ -28,7 +28,6 @@ public class ShooterSubsystem extends SubsystemBase {
   double currentHoodKey = 1.0;
 
   boolean enabled = false;
-
 
   InterpolatingDoubleTreeMap flywheelRPMMap = new InterpolatingDoubleTreeMap();
   InterpolatingDoubleTreeMap hoodPositionMap = new InterpolatingDoubleTreeMap();
@@ -172,5 +171,35 @@ public class ShooterSubsystem extends SubsystemBase {
   public boolean isEnabled() 
   {
     return this.enabled;
+  }
+
+  public Command shoot(FeederSubsystem feeder, LEDSubsystem leds, double setpoint) {
+    double hardcodedRPM = setpoint;
+
+    return Commands.sequence(
+        // KROK 1: Ustawienie celu i rozkręcenie koła zamachowego
+        Commands.runOnce(() -> {
+            flywheel.setTargetVelocity(RPM.of(hardcodedRPM));
+            flywheel.spinUpToVelocity(RPM.of(hardcodedRPM));
+        }, this),
+
+        // KROK 2: Czekamy, aż koło zamachowe osiągnie zadane RPM
+        // UWAGA: Zakładam, że masz metodę typu `isAtSetpoint()` w FlywheelSubsystem.
+        Commands.waitUntil(() -> flywheel.isAtTargetVelocity()),
+
+        // KROK 3: Gdy osiągnie RPM, włączamy jednocześnie Passer i Feeder
+        Commands.parallel(
+            leds.setColorCommand(LedColor.MAGENTA),
+            this.passFuelToShooter(),
+            feeder.feedShooter() // Podmień na rzeczywistą nazwę komendy z Twojego FeederSubsystem
+        )
+    )
+    .finallyDo(() -> {
+        // KROK 4: Gdy komenda się zakończy (lub zostanie przerwana), zatrzymaj koło.
+        // Passer i Feeder wyłączą się automatycznie, bo ich komendy przestaną być aktywne.
+        flywheel.stopControl();
+        leds.idle();
+    })
+    .withName("AutoShootSequence");
   }
 }

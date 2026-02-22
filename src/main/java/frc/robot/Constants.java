@@ -69,7 +69,7 @@ public final class Constants
   public static final class ShooterConstats 
   {
     public static final AngularVelocity INITIAL_TARGET_VELOCITY = RPM.of(5000);
-    public static final AngularVelocity VELOCITY_TOLERANCE = RPM.of(50);
+    public static final AngularVelocity VELOCITY_TOLERANCE = RPM.of(200);
     public static final boolean AUTO_PASSTHROUGH_ON_TARGET_VELOCITY = true;
   }
 
