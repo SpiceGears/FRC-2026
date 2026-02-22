@@ -28,6 +28,8 @@ import frc.robot.commands.shooter.ShooterCycleCommand;
 import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.led.LEDSubsystem;
+import frc.robot.subsystems.led.LEDSubsystem.LedColor;
 import frc.robot.subsystems.shooter.FlywheelSubsystem;
 import frc.robot.subsystems.shooter.HoodSubsystem;
 import frc.robot.subsystems.shooter.PasserSubsystem;
@@ -125,6 +127,8 @@ public class RobotContainer
   //final ClimbSubsystem climb = new ClimbSubsystem();
   final PasserSubsystem shooterPasser = new PasserSubsystem();
   final HoodSubsystem hood = new HoodSubsystem();
+
+  final LEDSubsystem leds = new LEDSubsystem();
 
   final ShooterSubsystem shooter = new ShooterSubsystem(shooterFlywheel, shooterPasser, hood);
   public RobotContainer()
@@ -245,6 +249,8 @@ public class RobotContainer
       driverXbox.povDown().onTrue(Commands.runOnce(() -> shooter.adjustHood(-0.1), shooter));
       // driverXbox.povRight().onTrue(intake.setAngleCmd(Degrees.of(70)));
       // driverXbox.povLeft().onTrue(intake.setAngleCmd(Degrees.of(90)));
+      leds.setDefaultCommand(leds.getDefaultDashboardCommand());
+      driverXbox.rightBumper().whileTrue(leds.setColorCommand(LedColor.BLUE));
     }
 
   }
