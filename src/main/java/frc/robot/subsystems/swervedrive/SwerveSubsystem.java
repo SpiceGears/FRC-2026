@@ -37,6 +37,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
 import frc.robot.Constants.DrivebaseConstants;
+import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.subsystems.swervedrive.Vision.Cameras;
 import frc.robot.subsystems.vision.limelight.AprilTagVisionSubsystem;
 
@@ -87,6 +88,7 @@ public class SwerveSubsystem extends SubsystemBase
    public SwerveSubsystem(File directory)
   { 
     vision = AprilTagVisionSubsystem.instance;
+    
     boolean blueAlliance = false;
     Pose2d startingPose = blueAlliance ? new Pose2d(new Translation2d(Meter.of(1),
                                                                       Meter.of(4)),
@@ -119,6 +121,7 @@ public class SwerveSubsystem extends SubsystemBase
       // Stop the odometry thread if we are using vision that way we can synchronize updates better.
       swerveDrive.stopOdometryThread();
     }
+    vision.imu = this.swerveDrive.getGyro();
     setupPathPlanner();
 
 
@@ -134,6 +137,8 @@ public class SwerveSubsystem extends SubsystemBase
   public SwerveSubsystem(SwerveDriveConfiguration driveCfg, SwerveControllerConfiguration controllerCfg)
   {
     vision = AprilTagVisionSubsystem.instance;
+
+    
     swerveDrive = new SwerveDrive(driveCfg,
                                   controllerCfg,
                                   Constants.MAX_SPEED,
@@ -156,19 +161,12 @@ public class SwerveSubsystem extends SubsystemBase
     if (DrivebaseConstants.USE_VISION)
     {
       
-      Optional<Pose3d> visionPose = vision.getEstimatedPose();
+      Optional<limelight.networktables.PoseEstimate> visionPose = vision.getEstimatedPose();
       if (visionPose.isPresent())
       {
-        swerveDrive.addVisionMeasurement(visionPose.get().toPose2d(), Timer.getFPGATimestamp());
+        swerveDrive.addVisionMeasurement(visionPose.get().pose.toPose2d(), visionPose.get().timestampSeconds);
       }
       //vision.updatePoseEstimation(swerveDrive);
-
-
-
-
-
-
-
       swerveDrive.updateOdometry();
     }
   }

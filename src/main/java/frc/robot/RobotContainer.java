@@ -256,8 +256,8 @@ public class RobotContainer
 
       driverXbox.povUp().onTrue(Commands.runOnce(() -> shooter.adjustHood(0.1), shooter));
       driverXbox.povDown().onTrue(Commands.runOnce(() -> shooter.adjustHood(-0.1), shooter));
-      driverXbox.povRight().onTrue(intake.setAngleCmd(Degrees.of(50)));
-      driverXbox.povLeft().onTrue(intake.setAngleCmd(Degrees.of(90)));
+      //driverXbox.povRight().onTrue(intake.setAngleCmd(Degrees.of(50)));
+      //driverXbox.povLeft().onTrue(intake.setAngleCmd(Degrees.of(90)));
       leds.setDefaultCommand(leds.getDefaultDashboardCommand());
       //driverXbox.leftBumper().whileTrue(leds.setColorCommand(LedColor.BLUE));
     }

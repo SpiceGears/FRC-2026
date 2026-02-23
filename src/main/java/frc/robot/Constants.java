@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Centimeter;
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radian;
 import static edu.wpi.first.units.Units.Radians;
@@ -45,23 +46,23 @@ public final class Constants
 
     // Hold time on motor brakes when disabled
     public static final double WHEEL_LOCK_TIME = 10; // seconds
-    public static final boolean USE_VISION = false;
+    public static final boolean USE_VISION = true;
   }
 
   public static final class VisionConstants
   {
-    public static final String SHOOTER_LL4_NAME = "shooterLL4";
+    public static final String SHOOTER_LL4_NAME = "limelight";
     public static final int SHOOTER_LL4_PIPELINE_INDEX = 0;
     
     public static final Pose3d SHOOTER_LL4_CAMERA_OFFSET = new Pose3d(
       Centimeter.of(0),
       Centimeter.of(0),
-      Centimeter.of(0),
+      Centimeter.of(56),
       
       new Rotation3d(
         Radian.of(0),
-        Radian.of(0),
-        Radian.of(0)
+        Degrees.of(11),
+        Degrees.of(0)
       )
     );
   }
