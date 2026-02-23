@@ -6,8 +6,6 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Centimeter;
-import static edu.wpi.first.units.Units.DegreesPerSecond;
-import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Volt;
@@ -19,7 +17,6 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -37,16 +34,15 @@ import yams.motorcontrollers.SmartMotorControllerConfig.TelemetryVerbosity;
 import yams.motorcontrollers.local.SparkWrapper;
 
 public class FlywheelSubsystem extends SubsystemBase {
-  /** Creates a new ShooterSubsystem. */
+
   SmartMotorControllerConfig shooterMotorConfig = new SmartMotorControllerConfig(this)
   .withControlMode(ControlMode.CLOSED_LOOP)
   .withClosedLoopController(
-    0.3, 0, 0 //bylo 0.02
-    // RPM.of(6000), DegreesPerSecondPerSecond.of(720)
+    0, 0, 0
     )
-  .withFeedforward(new SimpleMotorFeedforward(0.05, 0.20, 0.05) //kv = 0.11 bylo
+  .withFeedforward(new SimpleMotorFeedforward(0.25, 0.123, 0)
   ).withSimFeedforward(new SimpleMotorFeedforward(0, 0))
-  .withTelemetry("ShooterMotor", TelemetryVerbosity.MID)
+  .withTelemetry("ShooterMotor", TelemetryVerbosity.HIGH)
   .withGearing(new MechanismGearing(GearBox.fromReductionStages(1)))
   .withMotorInverted(false)
   .withIdleMode(MotorMode.COAST)

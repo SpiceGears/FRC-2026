@@ -29,7 +29,6 @@ import frc.robot.Constants;
 import frc.robot.Constants.PortMap;
 import yams.gearing.GearBox;
 import yams.gearing.MechanismGearing;
-//import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity
 import yams.mechanisms.config.ArmConfig;
 import yams.mechanisms.positional.Arm;
 import yams.motorcontrollers.SmartMotorController;
@@ -49,11 +48,10 @@ public class IntakeSubsystem extends SubsystemBase {
 
     private SmartMotorControllerConfig intakeExtenderConfig = new SmartMotorControllerConfig(this)
     .withControlMode(ControlMode.CLOSED_LOOP)
-    .withClosedLoopController(1, 0, 0, 
-    DegreesPerSecond.of(720), DegreesPerSecondPerSecond.of(720))
+    .withClosedLoopController(10, 0, 0, 
+    DegreesPerSecond.of(360), DegreesPerSecondPerSecond.of(360))
     .withSimClosedLoopController(5, 0, 0, DegreesPerSecond.of(9000), DegreesPerSecondPerSecond.of(45))
-    .withFeedforward(new ArmFeedforward(0.65, 0.0, 0))
-    // .withSimFeedforward(new ArmFeedforward(0, 0, 0))
+    .withFeedforward(new ArmFeedforward(0.1, 0, 5, 0.01))
     .withStatorCurrentLimit(Current.ofBaseUnits(20, Amp))
     .withTelemetry("IntakeExtender_MotorController", TelemetryVerbosity.HIGH)
     .withMotorInverted(false)
@@ -73,7 +71,7 @@ public class IntakeSubsystem extends SubsystemBase {
      intakeExtenderConfig);
 
     private final ArmConfig intakeExtenderMechanismConfig = new ArmConfig(intakeExtenderController)
-    //.withSoftLimits(Degrees.of(-5), Degrees.of(95))
+    .withSoftLimits(Degrees.of(-5), Degrees.of(95))
     //.withHardLimit(Degrees.of(-10), Degrees.of(100))
     .withStartingPosition(Degrees.of(90))
     .withLength(Meters.of(0.5)).withMass(Kilogram.of(1.2))
@@ -127,11 +125,7 @@ public class IntakeSubsystem extends SubsystemBase {
         intakeMaster.setVoltage(volts);
     }
 
-    public Command setAngleCmd(Angle angle) { return intakeExtender.run(angle);}
-
-    public Command setAngleAndStopCmd(Angle angle) { return intakeExtender.runTo(angle, Degrees.of(0));}
-
-    public void setAngle(Angle angle) {intakeExtender.setMechanismPositionSetpoint(angle);}
+    public Command setAngleCmd(Angle angle) { return intakeExtender.setAngle(angle); };
 
     @Override
     public void periodic() 
@@ -142,13 +136,5 @@ public class IntakeSubsystem extends SubsystemBase {
     @Override
     public void simulationPeriodic() {
         intakeExtender.simIterate();
-    }
-
-    public Command adjustIntake(Angle adjustment) 
-    {
-      return runOnce(() -> 
-      {
-        setAngle(this.getAngle().plus(adjustment));
-      });
     }
 }

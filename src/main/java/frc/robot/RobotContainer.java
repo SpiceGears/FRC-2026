@@ -143,8 +143,8 @@ public class RobotContainer
     
     //Create the NamedCommands that will be used in PathPlanner
     NamedCommands.registerCommand("test", Commands.print("I EXIST"));
-    NamedCommands.registerCommand("shoot", shooter.shoot(feeder, leds, 5500).withTimeout(3));
-    NamedCommands.registerCommand("shootLong", shooter.shoot(feeder, leds, 5000).withTimeout(10));
+    NamedCommands.registerCommand("shoot", shooter.shoot(feeder, leds, 3000).withTimeout(3));
+    NamedCommands.registerCommand("shootLong", shooter.shoot(feeder, leds, 3000).withTimeout(10));
 
 
     //Have the autoChooser pull in all PathPlanner autos as options
@@ -236,7 +236,8 @@ public class RobotContainer
       shooter.setDefaultCommand(new ShooterCycleCommand(shooter));
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(shooter.toggleEnabledCmd());
-      driverXbox.x().whileTrue(shooter.shoot(feeder, leds, 5500));
+      driverXbox.x().whileTrue(shooter.shoot(feeder, leds, 4000));
+      driverXbox.y().whileTrue(shooter.shoot(feeder, leds, 2000));
       //driverXbox.y().onTrue(shooter.stop());
       //driverXbox.start().onTrue(intake.setAngle(Degrees.of(90)));
       driverXbox.back().whileTrue(Commands.none());
@@ -255,10 +256,10 @@ public class RobotContainer
 
       driverXbox.povUp().onTrue(Commands.runOnce(() -> shooter.adjustHood(0.1), shooter));
       driverXbox.povDown().onTrue(Commands.runOnce(() -> shooter.adjustHood(-0.1), shooter));
-      // driverXbox.povRight().onTrue(intake.setAngleCmd(Degrees.of(70)));
-      // driverXbox.povLeft().onTrue(intake.setAngleCmd(Degrees.of(90)));
+      driverXbox.povRight().onTrue(intake.setAngleCmd(Degrees.of(50)));
+      driverXbox.povLeft().onTrue(intake.setAngleCmd(Degrees.of(90)));
       leds.setDefaultCommand(leds.getDefaultDashboardCommand());
-      driverXbox.leftBumper().whileTrue(leds.setColorCommand(LedColor.BLUE));
+      //driverXbox.leftBumper().whileTrue(leds.setColorCommand(LedColor.BLUE));
     }
 
   }

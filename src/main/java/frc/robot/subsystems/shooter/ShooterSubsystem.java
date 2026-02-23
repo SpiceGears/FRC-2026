@@ -17,8 +17,6 @@ import frc.robot.subsystems.led.LEDSubsystem;
 import frc.robot.subsystems.led.LEDSubsystem.LedColor;
 
 public class ShooterSubsystem extends SubsystemBase {
-  /** Creates a new ShooterSubsystem. */
-
 
   public final FlywheelSubsystem flywheel;
   public final PasserSubsystem passer;
@@ -47,7 +45,7 @@ public class ShooterSubsystem extends SubsystemBase {
     flywheelRPMMap.put(1.0, 6000.0);
 
     hoodPositionMap.put(0.0, 0.0);
-    hoodPositionMap.put(0.25, 30.0);
+    hoodPositionMap.put(0.5, 30.0);
     hoodPositionMap.put(1.0, 50.0);
   }
 
@@ -187,7 +185,6 @@ public class ShooterSubsystem extends SubsystemBase {
         // UWAGA: Zakładam, że masz metodę typu `isAtSetpoint()` w FlywheelSubsystem.
         Commands.waitUntil(() -> flywheel.isAtTargetVelocity()),
 
-        // KROK 3: Gdy osiągnie RPM, włączamy jednocześnie Passer i Feeder
         Commands.parallel(
             leds.setColorCommand(LedColor.MAGENTA),
             this.passFuelToShooter(),

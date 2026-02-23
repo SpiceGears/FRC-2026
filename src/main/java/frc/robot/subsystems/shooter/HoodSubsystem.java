@@ -6,9 +6,9 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Millimeters;
 
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Servo;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class HoodSubsystem extends SubsystemBase {
@@ -30,7 +30,7 @@ public class HoodSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // This method will be called once per scheduler run
+    SmartDashboard.putNumber("HoodCurrentPosition", currentPosition.baseUnitMagnitude());
   }
 
 
