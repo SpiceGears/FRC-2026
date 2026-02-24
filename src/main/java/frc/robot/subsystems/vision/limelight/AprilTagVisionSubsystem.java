@@ -6,11 +6,15 @@ package frc.robot.subsystems.vision.limelight;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.DegreesPerSecond;
+import static edu.wpi.first.units.Units.Rotation;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
 
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -22,12 +26,14 @@ import frc.robot.Constants.VisionConstants;
 import limelight.Limelight;
 import limelight.networktables.AngularVelocity3d;
 import limelight.networktables.LimelightPoseEstimator;
+import limelight.networktables.LimelightResults;
 import limelight.networktables.PoseEstimate;
 import swervelib.imu.SwerveIMU;
 import limelight.networktables.LimelightPoseEstimator.EstimationMode;
 import limelight.networktables.LimelightSettings.ImuMode;
 import limelight.networktables.LimelightSettings.LEDMode;
 import limelight.networktables.LimelightSettings.StreamMode;
+import limelight.networktables.target.AprilTagFiducial;
 import limelight.networktables.Orientation3d;
 
 public class AprilTagVisionSubsystem extends SubsystemBase {
@@ -56,7 +62,7 @@ public class AprilTagVisionSubsystem extends SubsystemBase {
     .withLimelightLEDMode(LEDMode.PipelineControl)
     .withPipelineIndex(VisionConstants.SHOOTER_LL4_PIPELINE_INDEX)
     .withStreamMode(StreamMode.Standard)
-    .withImuMode(ImuMode.ExternalImu)
+    .withImuMode(ImuMode.SyncInternalImu)
     .save();
 
     poseEstimator = shooterCamera.createPoseEstimator(EstimationMode.MEGATAG2);
@@ -67,12 +73,29 @@ public class AprilTagVisionSubsystem extends SubsystemBase {
 
   public Optional<PoseEstimate> getEstimatedPose() {
     Optional<PoseEstimate> pose = poseEstimator.getPoseEstimate();
+    //shooterCamera.getLatestResults().get().targets_Fiducials[0].getTargetPose_RobotSpace();
     if (pose.isEmpty()) {
       return Optional.empty();
     }
 
     return Optional.of(pose.get());
   }
+
+
+  public Optional<List<Pair<Double, Pose3d>>> getTargetPoses() 
+  {
+    Optional<LimelightResults> resultsOpt = shooterCamera.getLatestResults();
+    if (resultsOpt.isEmpty()) return Optional.empty();
+
+    LimelightResults results = resultsOpt.get();
+    List<Pair<Double,Pose3d>> targetPoses = new LinkedList<>();
+    for (AprilTagFiducial target : results.targets_Fiducials) {
+      targetPoses.add(new Pair<>(target.fiducialID, target.getTargetPose_RobotSpace())
+      );
+    }
+    return Optional.of(targetPoses);
+  }
+
 
   // public Optional<Pose2d> getEstimatedPose2d() {
 
@@ -105,9 +128,19 @@ public class AprilTagVisionSubsystem extends SubsystemBase {
       // if (estimatedPose2d.isPresent())
       {
         field.setRobotPose(estimatedPose2d);
-        SmartDashboard.putData("Vision Estimated pose", field);
+        SmartDashboard.putData("Vision/Estimated pose", field);
+        SmartDashboard.putNumber("Vision/Estimated Pose Yaw Rotations", Rotation.convertFrom(imu.getRotation3d().getZ(), Degrees));
       }
+
+      
     }
+    
+    if (getTargetPoses().isPresent()) 
+    SmartDashboard.putNumber("Vision/Detection Count", getTargetPoses().get().size());
+
+
+
+    
     // This method will be called once per scheduler run
   }
 }

@@ -6,15 +6,23 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Centimeter;
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Millimeter;
+import static edu.wpi.first.units.Units.Millimeters;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radian;
 import static edu.wpi.first.units.Units.Radians;
+
+import java.util.LinkedList;
+import java.util.List;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
 import swervelib.math.Matter;
 
 /**
@@ -72,6 +80,17 @@ public final class Constants
     public static final AngularVelocity INITIAL_TARGET_VELOCITY = RPM.of(5000);
     public static final AngularVelocity VELOCITY_TOLERANCE = RPM.of(200);
     public static final boolean AUTO_PASSTHROUGH_ON_TARGET_VELOCITY = true;
+
+
+    public static final Distance MAX_INTERPOLATED_RANGE = Inches.of(
+      Math.sqrt(
+        Math.pow(181.56 - Inches.convertFrom(340, Millimeters), 2) 
+        + 
+        Math.pow(158.32 - Inches.convertFrom(340, Millimeters),2)
+      )
+      );
+    /// range in a straight line from center of the alliance hub to the robot position near that alliance outpost
+    /// all ranges above this value (or below zero) might result in inaccuracy fo shooting
   }
 
   public static class OperatorConstants
@@ -82,6 +101,12 @@ public final class Constants
     public static final double LEFT_Y_DEADBAND = 0.1;
     public static final double RIGHT_X_DEADBAND = 0.1;
     public static final double TURN_CONSTANT    = 6;
+  }
+
+  public static class AutoConstants 
+  {
+    public static final List<Double> TAGS_OF_INTEREST_HUB = List.of(25.0,26.0,27.0,18.0);
+
   }
 
 
