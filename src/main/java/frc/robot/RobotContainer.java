@@ -24,12 +24,15 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.IntakeCommands;
 import frc.robot.commands.feeder.FeederFeedShooterCommand;
 import frc.robot.commands.intake.IntakeFuel;
 import frc.robot.commands.shooter.ShooterCycleCommand;
 import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
-import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.IntakePivotSubsystem;
+import frc.robot.subsystems.IntakeRollersSubsystem;
+import frc.robot.subsystems.IntakeRollersSubsystem.RollerSpeed;
 import frc.robot.subsystems.led.LEDSubsystem;
 import frc.robot.subsystems.led.LEDSubsystem.LedColor;
 import frc.robot.subsystems.shooter.FlywheelSubsystem;
@@ -123,7 +126,8 @@ public class RobotContainer
    */
 
 
-  final IntakeSubsystem intake = new IntakeSubsystem();
+  final IntakePivotSubsystem intakePivot = new IntakePivotSubsystem();
+  final IntakeRollersSubsystem intakeRollers = new IntakeRollersSubsystem();
   final FlywheelSubsystem shooterFlywheel = new FlywheelSubsystem();
   final FeederSubsystem feeder = new FeederSubsystem();
   //final ClimbSubsystem climb = new ClimbSubsystem();
@@ -246,7 +250,7 @@ public class RobotContainer
       feeder.setDefaultCommand(new FeederFeedShooterCommand(feeder, driverXbox.rightBumper()));
 
       
-      driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));
+      //driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));
       
       
       driverXbox.leftBumper().whileTrue(shooter.passFuelToShooter());
@@ -254,10 +258,13 @@ public class RobotContainer
       // driverXbox.povUp().onTrue(intake.adjustIntake(Degrees.of(5)));
       // driverXbox.povDown().onTrue(intake.adjustIntake(Degrees.of(-5)));
 
-      driverXbox.povUp().onTrue(Commands.runOnce(() -> shooter.adjustHood(0.1), shooter));
-      driverXbox.povDown().onTrue(Commands.runOnce(() -> shooter.adjustHood(-0.1), shooter));
-      //driverXbox.povRight().onTrue(intake.setAngleCmd(Degrees.of(50)));
-      //driverXbox.povLeft().onTrue(intake.setAngleCmd(Degrees.of(90)));
+      //driverXbox.povUp().onTrue(Commands.runOnce(() -> shooter.adjustHood(0.1), shooter));
+      //driverXbox.povDown().onTrue(Commands.runOnce(() -> shooter.adjustHood(-0.1), shooter));
+      //driverXbox.povRight().onTrue(intakePivot.homingCommand());
+      driverXbox.povLeft().whileTrue(intakePivot.deployCommand());
+      driverXbox.povUp().whileTrue(intakeRollers.runRollersCommand(RollerSpeed.INTAKE));
+      driverXbox.povDown().whileTrue(IntakeCommands.agitate(intakePivot, intakeRollers));
+
       leds.setDefaultCommand(leds.getDefaultDashboardCommand());
       //driverXbox.leftBumper().whileTrue(leds.setColorCommand(LedColor.BLUE));
     }
