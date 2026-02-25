@@ -27,6 +27,7 @@ import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.IntakeCommands;
 import frc.robot.commands.feeder.FeederFeedShooterCommand;
 import frc.robot.commands.intake.IntakeFuel;
+import frc.robot.commands.shooter.AutoHoodAdjustment;
 import frc.robot.commands.shooter.ShooterCycleCommand;
 import frc.robot.commands.swervedrive.SwerveAimAt;
 import frc.robot.subsystems.ClimbSubsystem;
@@ -44,6 +45,7 @@ import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.subsystems.vision.ShooterVisionAid;
 import frc.robot.subsystems.vision.limelight.AprilTagVisionSubsystem;
 
+import static edu.wpi.first.units.Units.Centimeters;
 import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Degrees;
 
@@ -60,6 +62,7 @@ public class RobotContainer
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   final         CommandXboxController driverXbox = new CommandXboxController(0);
+  final CommandXboxController copilotXbox = new CommandXboxController(1);
 
   final AprilTagVisionSubsystem aprilTagVisionSubsystem = new AprilTagVisionSubsystem();
 
@@ -242,6 +245,8 @@ public class RobotContainer
 
       //intake.setDefaultCommand(intake.setAngleCmd(Degrees.of(90)));
       shooter.setDefaultCommand(new ShooterCycleCommand(shooter));
+
+      hood.setDefaultCommand(new AutoHoodAdjustment(hood));
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(shooter.toggleEnabledCmd());
       driverXbox.x().whileTrue(shooter.shootAdaptable(feeder, leds));
@@ -254,6 +259,10 @@ public class RobotContainer
       //driverXbox.rightBumper().onTrue(Commands.none());
       feeder.setDefaultCommand(new FeederFeedShooterCommand(feeder, driverXbox.rightBumper()));
 
+
+      //copilotXbox.leftBumper().onTrue(climb.adjustHeight(Centimeters.of(-1)));
+      //copilotXbox.rightBumper().onTrue(climb.adjustHeight(Centimeters.of(1)));
+
       
       //driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));
       
@@ -263,12 +272,13 @@ public class RobotContainer
       // driverXbox.povUp().onTrue(intake.adjustIntake(Degrees.of(5)));
       // driverXbox.povDown().onTrue(intake.adjustIntake(Degrees.of(-5)));
 
-      driverXbox.povUp().onTrue(Commands.runOnce(() -> shooter.adjustHood(0.1), shooter));
-      driverXbox.povDown().onTrue(Commands.runOnce(() -> shooter.adjustHood(-0.1), shooter));
+      //driverXbox.povUp().onTrue(Commands.runOnce(() -> shooter.adjustHood(0.1), shooter));
+      //driverXbox.povDown().onTrue(Commands.runOnce(() -> shooter.adjustHood(-0.1), shooter));
       //driverXbox.povRight().onTrue(intakePivot.homingCommand());
+
       driverXbox.povLeft().whileTrue(intakePivot.deployCommand());
-      //driverXbox.povUp().whileTrue(intakeRollers.runRollersCommand(RollerSpeed.INTAKE));
-      //driverXbox.povDown().whileTrue(IntakeCommands.agitate(intakePivot, intakeRollers));
+      driverXbox.povUp().whileTrue(intakeRollers.runRollersCommand(RollerSpeed.INTAKE));
+      driverXbox.povDown().whileTrue(IntakeCommands.agitate(intakePivot, intakeRollers));
 
       leds.setDefaultCommand(leds.getDefaultDashboardCommand());
       //driverXbox.leftBumper().whileTrue(leds.setColorCommand(LedColor.BLUE));

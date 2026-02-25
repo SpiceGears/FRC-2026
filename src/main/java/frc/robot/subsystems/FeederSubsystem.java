@@ -42,7 +42,7 @@ public class FeederSubsystem extends SubsystemBase {
   // .withStatorCurrentLimit(Amp.of(20))
   // .withGearing(1)
   // .withTelemetry("FeederMotor", TelemetryVerbosity.LOW);
-  private SparkMax feederMotor = new SparkMax(PortMap.FEEDER_MOTOR_ID, MotorType.kBrushed);
+  private SparkMax feederMotor = new SparkMax(PortMap.FEEDER_MOTOR_ID, MotorType.kBrushless);
   private SparkMaxConfig feederMotorConfig = new SparkMaxConfig();
 
   //private SmartMotorController feederController = new SparkWrapper(feederMotor, DCMotor.getVex775Pro(1), feederControllerConfig);
@@ -51,7 +51,7 @@ public class FeederSubsystem extends SubsystemBase {
   public FeederSubsystem() 
   {
     feederMotorConfig
-    .inverted(true)
+    .inverted(false)
     .smartCurrentLimit(20)
     .idleMode(IdleMode.kCoast);
 

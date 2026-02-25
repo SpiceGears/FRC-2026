@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -31,7 +32,7 @@ public class ShooterVisionAid {
 
     public static ShooterVisionAid instance;
 
-    static double cachedKey;
+    static double cachedKey = 0.90;
 
     AprilTagVisionSubsystem vision;
 
@@ -55,6 +56,7 @@ public class ShooterVisionAid {
 
 
         instance = this;
+
     }
 
 
@@ -149,8 +151,10 @@ public class ShooterVisionAid {
     {
         Optional<Double> current = getCurrentlyApplicableKey();
         if (current.isPresent()) {
+            SmartDashboard.putBoolean("SVAS/Refreshed key", true);
             cachedKey = current.get();
         }
+        else SmartDashboard.putBoolean("SVAS/Refreshed key", false);
         return cachedKey;
     } 
 

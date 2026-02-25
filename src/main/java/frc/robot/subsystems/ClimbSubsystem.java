@@ -13,6 +13,7 @@ import static edu.wpi.first.units.Units.Seconds;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -87,5 +88,14 @@ public class ClimbSubsystem extends SubsystemBase {
     public Command setHeight(Distance height) 
     {
         return elevator.runTo(height, Millimeter.of(0.5));
+    }
+
+    public Command adjustHeight(Distance addedHeight) 
+    {
+        return runOnce(() -> 
+        {
+            elevator.setMeasurementPositionSetpoint(elevator.getHeight().plus(addedHeight));
+        }
+        );
     }
 }

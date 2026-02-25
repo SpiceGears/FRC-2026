@@ -4,6 +4,8 @@
 
 package frc.robot.commands.shooter;
 
+import static edu.wpi.first.units.Units.Millimeter;
+
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.shooter.HoodSubsystem;
@@ -31,7 +33,7 @@ public class AutoHoodAdjustment extends Command {
   {
     Distance hoodPosition = svas.getHoodPosition(svas.getCurrentOrCachedKey());
 
-    hood.setDistance(hoodPosition);
+    hood.setLenghtMM(hoodPosition.in(Millimeter));
   }
 
   // Called once the command ends or is interrupted.

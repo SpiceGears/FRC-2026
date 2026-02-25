@@ -36,13 +36,13 @@ public class IntakePivotSubsystem extends SubsystemBase {
             .withControlMode(ControlMode.OPEN_LOOP) 
             .withStatorCurrentLimit(Current.ofBaseUnits(20, Amp))
             .withTelemetry("IntakePivot", TelemetryVerbosity.HIGH)
-            .withMotorInverted(false) // Zakładamy ujemne napięcie w dół
+            .withMotorInverted(true) // Zakładamy ujemne napięcie w dół
             .withGearing(new MechanismGearing(GearBox.fromStages("4:1", "4:1", "5:1", "34:16")))
             .withIdleMode(MotorMode.BRAKE)
             .withOpenLoopRampRate(Seconds.of(0.25))
             .withSoftLimit(Degrees.of(-5), Degrees.of(100))
             .withStartingPosition(Degrees.of(90))
-            .withFollowers(new Pair<>(new SparkMax(PortMap.INTAKE_EXTENDER_FOLLOWER_ID, MotorType.kBrushless), true));
+            .withFollowers(new Pair<>(new SparkMax(PortMap.INTAKE_EXTENDER_FOLLOWER_ID, MotorType.kBrushless), false));
         
         pivotController = new SparkWrapper(pivotMotor, DCMotor.getNeo550(1), config);
     }

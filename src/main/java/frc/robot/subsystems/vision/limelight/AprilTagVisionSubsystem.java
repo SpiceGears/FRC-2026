@@ -137,6 +137,8 @@ public class AprilTagVisionSubsystem extends SubsystemBase {
     
     if (getTargetPoses().isPresent()) 
     SmartDashboard.putNumber("Vision/Detection Count", getTargetPoses().get().size());
+    else
+    SmartDashboard.putNumber("Vision/Detection Count", 0);
 
 
 
