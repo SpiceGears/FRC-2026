@@ -18,7 +18,7 @@ import frc.robot.commands.shooter.ShooterCycleCommand;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.led.LEDSubsystem;
 import frc.robot.subsystems.led.LEDSubsystem.LedColor;
-import frc.robot.subsystems.vision.ShooterVisionAid;
+//import frc.robot.subsystems.vision.ShooterVisionAid;
 
 public class ShooterSubsystem extends SubsystemBase {
 
@@ -30,14 +30,14 @@ public class ShooterSubsystem extends SubsystemBase {
   double currentHoodKey = 1.0;
 
   boolean enabled = false;
-  final ShooterVisionAid svas; 
+  //final ShooterVisionAid svas; 
 
   public ShooterSubsystem(FlywheelSubsystem flywheel, PasserSubsystem passer, HoodSubsystem hood) {
     this.flywheel = flywheel;
     this.passer = passer;
     this.hood = hood;
 
-    this.svas = ShooterVisionAid.instance;
+    //this.svas = ShooterVisionAid.instance;
 
     configureRPMAngleMaps();
   }
@@ -45,10 +45,10 @@ public class ShooterSubsystem extends SubsystemBase {
 
   private void configureRPMAngleMaps() 
   {
-    svas.addHoodPositionKey(0.0, 0);
-    svas.addHoodPositionKey(1.0, 20);
-    svas.addShooterRPMKey(0.0, 0.0);
-    svas.addShooterRPMKey(1.0, 6000);
+    // svas.addHoodPositionKey(0.0, 0);
+    // svas.addHoodPositionKey(1.0, 20);
+    // svas.addShooterRPMKey(0.0, 0.0);
+    // svas.addShooterRPMKey(1.0, 6000);
   }
 
   @Override
@@ -59,7 +59,7 @@ public class ShooterSubsystem extends SubsystemBase {
     //SmartDashboard.putNumber("shooterFlywheelInterpolationMapKey", currentFlywheelKey);
     // This method will be called once per scheduler run
     
-    svas.telemetry(); //report telemtry from SVA system s
+    // svas.telemetry(); //report telemtry from SVA system s
   }
 
   public void setFlywheelParameter(double key) 
@@ -180,35 +180,35 @@ public class ShooterSubsystem extends SubsystemBase {
   /** 
    * shoot with adaptable speed calculated by distance with ShooterVisionAid subsystem 
   */
-  public Command shootAdaptable(FeederSubsystem feeder, LEDSubsystem leds) {
-    //double hardcodedRPM = setpoint;
+  // public Command shootAdaptable(FeederSubsystem feeder, LEDSubsystem leds) {
+  //   //double hardcodedRPM = setpoint;
 
-    return Commands.sequence(
-        // KROK 1: Ustawienie celu i rozkręcenie koła zamachowego
-        Commands.runOnce(() -> {
-            AngularVelocity flywheelRPM = svas.getRPM(svas.getCurrentOrCachedKey());
-            flywheel.setTargetVelocity(flywheelRPM);
-            flywheel.spinUpToVelocity(flywheelRPM);
-        }, this),
+  //   return Commands.sequence(
+  //       // KROK 1: Ustawienie celu i rozkręcenie koła zamachowego
+  //       Commands.runOnce(() -> {
+  //           AngularVelocity flywheelRPM = svas.getRPM(svas.getCurrentOrCachedKey());
+  //           flywheel.setTargetVelocity(flywheelRPM);
+  //           flywheel.spinUpToVelocity(flywheelRPM);
+  //       }, this),
 
-        // KROK 2: Czekamy, aż koło zamachowe osiągnie zadane RPM
-        // UWAGA: Zakładam, że masz metodę typu `isAtSetpoint()` w FlywheelSubsystem.
-        Commands.waitUntil(() -> flywheel.isAtTargetVelocity()),
+  //       // KROK 2: Czekamy, aż koło zamachowe osiągnie zadane RPM
+  //       // UWAGA: Zakładam, że masz metodę typu `isAtSetpoint()` w FlywheelSubsystem.
+  //       Commands.waitUntil(() -> flywheel.isAtTargetVelocity()),
 
-        Commands.parallel(
-            leds.setColorCommand(LedColor.MAGENTA),
-            this.passFuelToShooter(),
-            feeder.feedShooter() // Podmień na rzeczywistą nazwę komendy z Twojego FeederSubsystem
-        )
-    )
-    .finallyDo(() -> {
-        // KROK 4: Gdy komenda się zakończy (lub zostanie przerwana), zatrzymaj koło.
-        // Passer i Feeder wyłączą się automatycznie, bo ich komendy przestaną być aktywne.
-        flywheel.stopControl();
-        leds.idle();
-    })
-    .withName("AutoShootSequence");
-  }
+  //       Commands.parallel(
+  //           leds.setColorCommand(LedColor.MAGENTA),
+  //           this.passFuelToShooter(),
+  //           feeder.feedShooter() // Podmień na rzeczywistą nazwę komendy z Twojego FeederSubsystem
+  //       )
+  //   )
+  //   .finallyDo(() -> {
+  //       // KROK 4: Gdy komenda się zakończy (lub zostanie przerwana), zatrzymaj koło.
+  //       // Passer i Feeder wyłączą się automatycznie, bo ich komendy przestaną być aktywne.
+  //       flywheel.stopControl();
+  //       leds.idle();
+  //   })
+  //   .withName("AutoShootSequence");
+  // }
 
   public Command shoot(FeederSubsystem feeder, LEDSubsystem leds, double setpoint) {
     double hardcodedRPM = setpoint;

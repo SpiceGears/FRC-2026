@@ -19,6 +19,8 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
+
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -31,15 +33,18 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
 import frc.robot.Constants.DrivebaseConstants;
+import frc.robot.Landmarks;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.subsystems.swervedrive.Vision.Cameras;
-import frc.robot.subsystems.vision.limelight.AprilTagVisionSubsystem;
+//import frc.robot.subsystems.vision.limelight.AprilTagVisionSubsystem;
 
 import java.io.File;
 import java.io.IOException;
@@ -78,7 +83,9 @@ public class SwerveSubsystem extends SubsystemBase
    */
   //private       Vision      vision;
 
-  private final AprilTagVisionSubsystem vision;
+  //private final AprilTagVisionSubsystem vision;
+
+  private Field2d field = new Field2d();
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -87,7 +94,7 @@ public class SwerveSubsystem extends SubsystemBase
    */
    public SwerveSubsystem(File directory)
   { 
-    vision = AprilTagVisionSubsystem.instance;
+    //vision = AprilTagVisionSubsystem.instance;
     
     boolean blueAlliance = false;
     Pose2d startingPose = blueAlliance ? new Pose2d(new Translation2d(Meter.of(1),
@@ -121,11 +128,11 @@ public class SwerveSubsystem extends SubsystemBase
       // Stop the odometry thread if we are using vision that way we can synchronize updates better.
       swerveDrive.stopOdometryThread();
     }
-    vision.imu = this.swerveDrive.getGyro();
+    //vision.imu = this.swerveDrive.getGyro();
     setupPathPlanner();
 
 
-    addGyroOffsets();
+    //addGyroOffsets();
 
     
   }
@@ -138,7 +145,7 @@ public class SwerveSubsystem extends SubsystemBase
    */
   public SwerveSubsystem(SwerveDriveConfiguration driveCfg, SwerveControllerConfiguration controllerCfg)
   {
-    vision = AprilTagVisionSubsystem.instance;
+    //vision = AprilTagVisionSubsystem.instance;
 
     
     swerveDrive = new SwerveDrive(driveCfg,
@@ -160,17 +167,20 @@ public class SwerveSubsystem extends SubsystemBase
   public void periodic()
   {
     // When vision is enabled we must manually update odometry in SwerveDrive
-    if (DrivebaseConstants.USE_VISION)
-    {
+    // if (DrivebaseConstants.USE_VISION)
+    // {
       
-      Optional<limelight.networktables.PoseEstimate> visionPose = vision.getEstimatedPose();
-      if (visionPose.isPresent())
-      {
-        swerveDrive.addVisionMeasurement(visionPose.get().pose.toPose2d(), visionPose.get().timestampSeconds);
-      }
-      //vision.updatePoseEstimation(swerveDrive);
-      swerveDrive.updateOdometry();
-    }
+    //   Optional<limelight.networktables.PoseEstimate> visionPose = vision.getEstimatedPose();
+    //   if (visionPose.isPresent())
+    //   {
+    //     swerveDrive.addVisionMeasurement(visionPose.get().pose.toPose2d(), visionPose.get().timestampSeconds);
+    //   }
+    //   //vision.updatePoseEstimation(swerveDrive);
+    //   swerveDrive.updateOdometry();
+    // }
+
+    field.setRobotPose(getPose());
+    SmartDashboard.putData("RobotOdometry", field);
   }
 
   @Override
@@ -271,6 +281,30 @@ public class SwerveSubsystem extends SubsystemBase
         }
       }
     });
+  }
+
+  public Command aimAtHub(DoubleSupplier forwardInput, DoubleSupplier leftInput) {
+    return run(() -> {
+      // 1. Odczyt drążków z martwą strefą (żeby robot nie pełzał po puszczeniu)
+      double rawForward = MathUtil.applyDeadband(forwardInput.getAsDouble(), 0.1);
+      double rawLeft = MathUtil.applyDeadband(leftInput.getAsDouble(), 0.1);
+
+      // Przeskalowanie wychylenia drążka (-1 do 1) na metry na sekundę
+      double vxMetersPerSecond = rawForward;
+      double vyMetersPerSecond = rawLeft;
+
+      // 2. Wyliczenie kąta do Huba
+      Pose2d robotPos = getPose();
+      Translation2d hubPos = Landmarks.hubPosition();
+      
+      // Zwraca idealny kąt Rotation2d celujący prosto w Huba
+      Rotation2d targetHeading = hubPos.minus(robotPos.getTranslation()).getAngle();
+
+      field.getObject("HubTarget").setPose(new Pose2d(hubPos, new Rotation2d()));
+      SmartDashboard.putNumber("Aiming/Error (deg)", targetHeading.minus(robotPos.getRotation()).getDegrees());
+
+      drive(getTargetSpeeds(vxMetersPerSecond, vyMetersPerSecond, targetHeading));
+    }).withName("AimAtHub");
   }
 
   /**

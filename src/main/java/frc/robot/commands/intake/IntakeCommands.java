@@ -1,4 +1,4 @@
-package frc.robot.commands;
+package frc.robot.commands.intake;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -8,9 +8,6 @@ import frc.robot.subsystems.IntakeRollersSubsystem.RollerSpeed;
 
 public class IntakeCommands {
 
-    // ==========================================
-    // KOMENDA AGITATE (Szarpanie i pobieranie)
-    // ==========================================
     public static Command agitate(IntakePivotSubsystem pivot, IntakeRollersSubsystem rollers) {
         return Commands.parallel(
             // 1. Włącz rolki na pełną moc pobierania
