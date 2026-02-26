@@ -23,6 +23,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.PortMap;
@@ -53,7 +54,7 @@ public class PasserSubsystem extends SubsystemBase {
   // .withOpenLoopRampRate(Seconds.of(0.25))
   // .withStatorCurrentLimit(Amps.of(30));
 
-  private SparkMax passerMotor = new SparkMax(PortMap.SHOOTER_PASSER_MOTOR_ID, MotorType.kBrushless);
+  private PWMSparkMax passerMotor = new PWMSparkMax(PortMap.SHOOTER_PASSER_MOTOR_PWM);//, MotorType.kBrushless);
   private SparkMaxConfig passerMotorConfig = new SparkMaxConfig();
 
   //SmartMotorController passerController = new SparkWrapper(passerMotor, DCMotor.getNEO(1), passerMotorConfig);
@@ -72,7 +73,7 @@ public class PasserSubsystem extends SubsystemBase {
     .openLoopRampRate(0.25)
     .inverted(true);
 
-    passerMotor.configure(passerMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    //passerMotor.configure(passerMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
     instance = this;
   }
@@ -92,7 +93,7 @@ public class PasserSubsystem extends SubsystemBase {
 
   public void setPassingSpeed(double speed) 
   {
-    passerMotor.set(MathUtil.clamp(speed, -1, 1));
+    passerMotor.set(MathUtil.clamp(speed * -1, -1, 1));
     //passerController.setVelocity(speed);
   }
 

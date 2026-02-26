@@ -118,13 +118,16 @@ public final class Constants
     public static final int INTAKE_EXTENDER_FOLLOWER_ID = 23;
 
     public static final int INTAKE_SPINNER_ID = 21;
+
     public static final int FEEDER_MOTOR_ID = 24;
+    public static final int FEEDER_MOTOR_PWM = 5;
 
     public static final int SHOOTER_LEFT_MOTOR_ID = 31;
     public static final int SHOOTER_MID_MOTOR_ID = 32;
     public static final int SHOOTER_RIGHT_MOTOR_ID = 33;
 
     public static final int SHOOTER_PASSER_MOTOR_ID = 34;
+    public static final int SHOOTER_PASSER_MOTOR_PWM = 6;
 
     public static final int ELEVATOR_MOTOR_ID = 41;
     public static final int ELEVATOR_FOLLOWER_MOTOR_ID = 42;

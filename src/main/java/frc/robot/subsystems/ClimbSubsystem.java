@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Millimeter;
 import static edu.wpi.first.units.Units.Pounds;
 import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volt;
 
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -20,6 +21,7 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.PortMap;
@@ -37,7 +39,7 @@ import yams.motorcontrollers.local.SparkWrapper;
 public class ClimbSubsystem extends SubsystemBase {
 
     private SmartMotorControllerConfig climbMotorConfig = new SmartMotorControllerConfig(this)
-    .withControlMode(ControlMode.CLOSED_LOOP)
+    .withControlMode(ControlMode.OPEN_LOOP)
     .withMechanismCircumference(Meters.of(Meters.convertFrom(0.5, Inches)))
     .withClosedLoopController(4,0,0,MetersPerSecond.of(0.5), MetersPerSecondPerSecond.of(0.5))
     .withSimClosedLoopController(4,0,0,MetersPerSecond.of(0.5), MetersPerSecondPerSecond.of(0.5))
@@ -62,7 +64,7 @@ public class ClimbSubsystem extends SubsystemBase {
 
     private SmartMotorController climbController = new SparkWrapper(climbMotor, DCMotor.getNEO(1), climbMotorConfig);
 
-    private ElevatorConfig elevatorConfig = new ElevatorConfig()
+    private ElevatorConfig elevatorConfig = new ElevatorConfig(climbController)
     .withStartingHeight(Meters.of(0.12))
     .withHardLimits(Meters.of(0), Meters.of(0.12))
     .withTelemetry("Elevator", TelemetryVerbosity.HIGH)
@@ -97,5 +99,10 @@ public class ClimbSubsystem extends SubsystemBase {
             elevator.setMeasurementPositionSetpoint(elevator.getHeight().plus(addedHeight));
         }
         );
+    }
+
+    public Command setVoltage(double voltage) 
+    {
+        return run(() -> elevator.setVoltage(Volt.of(voltage)));
     }
 }

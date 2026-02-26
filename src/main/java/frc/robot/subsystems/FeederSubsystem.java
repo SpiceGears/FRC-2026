@@ -23,6 +23,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.PortMap;
@@ -42,7 +43,7 @@ public class FeederSubsystem extends SubsystemBase {
   // .withStatorCurrentLimit(Amp.of(20))
   // .withGearing(1)
   // .withTelemetry("FeederMotor", TelemetryVerbosity.LOW);
-  private SparkMax feederMotor = new SparkMax(PortMap.FEEDER_MOTOR_ID, MotorType.kBrushless);
+  private PWMSparkMax feederMotor = new PWMSparkMax(PortMap.FEEDER_MOTOR_PWM);
   private SparkMaxConfig feederMotorConfig = new SparkMaxConfig();
 
   //private SmartMotorController feederController = new SparkWrapper(feederMotor, DCMotor.getVex775Pro(1), feederControllerConfig);
@@ -55,7 +56,7 @@ public class FeederSubsystem extends SubsystemBase {
     .smartCurrentLimit(20)
     .idleMode(IdleMode.kCoast);
 
-    feederMotor.configure(feederMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    //feederMotor.configure(feederMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 
   @Override

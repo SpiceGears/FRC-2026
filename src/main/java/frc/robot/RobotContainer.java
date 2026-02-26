@@ -48,6 +48,7 @@ import frc.robot.subsystems.vision.limelight.AprilTagVisionSubsystem;
 import static edu.wpi.first.units.Units.Centimeters;
 import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
 
 import java.io.File;
 import swervelib.SwerveInputStream;
@@ -135,7 +136,7 @@ public class RobotContainer
   final IntakeRollersSubsystem intakeRollers = new IntakeRollersSubsystem();
   final FlywheelSubsystem shooterFlywheel = new FlywheelSubsystem();
   final FeederSubsystem feeder = new FeederSubsystem();
-  //final ClimbSubsystem climb = new ClimbSubsystem();
+  final ClimbSubsystem climb = new ClimbSubsystem();
   final PasserSubsystem shooterPasser = new PasserSubsystem();
   final HoodSubsystem hood = new HoodSubsystem();
 
@@ -245,6 +246,7 @@ public class RobotContainer
 
       //intake.setDefaultCommand(intake.setAngleCmd(Degrees.of(90)));
       shooter.setDefaultCommand(new ShooterCycleCommand(shooter));
+      //climb.setDefaultCommand(climb.setHeight(Meters.of(0.12)));
 
       hood.setDefaultCommand(new AutoHoodAdjustment(hood));
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
@@ -260,8 +262,8 @@ public class RobotContainer
       feeder.setDefaultCommand(new FeederFeedShooterCommand(feeder, driverXbox.rightBumper()));
 
 
-      //copilotXbox.leftBumper().onTrue(climb.adjustHeight(Centimeters.of(-1)));
-      //copilotXbox.rightBumper().onTrue(climb.adjustHeight(Centimeters.of(1)));
+      copilotXbox.leftBumper().onTrue(climb.setVoltage(-5));
+      copilotXbox.rightBumper().onTrue(climb.setVoltage(5));
 
       
       //driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));
