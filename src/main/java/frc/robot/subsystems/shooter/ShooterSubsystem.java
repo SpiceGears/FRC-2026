@@ -57,14 +57,14 @@ public class ShooterSubsystem extends SubsystemBase {
         rpmMap.put(5.2, 5000.0);
 
         hoodMap.put(1.24,10.0);
-        hoodMap.put(1.5, 10.0);
-        hoodMap.put(1.71, 11.0);
-        hoodMap.put(2.11, 12.0);
+        hoodMap.put(1.5, 11.0);
+        hoodMap.put(1.71, 12.0);
+        hoodMap.put(2.11, 14.0);
         hoodMap.put(2.56, 14.0);
-        hoodMap.put(2.57, 14.0);
-        hoodMap.put(2.73, 15.0);
-        hoodMap.put(3.14, 16.0);
-        hoodMap.put(3.28, 18.0);
+        hoodMap.put(2.57, 15.0);
+        hoodMap.put(2.73, 16.0);
+        hoodMap.put(3.14, 18.0);
+        hoodMap.put(3.28, 19.0);
         hoodMap.put(3.5, 16.5);
         hoodMap.put(3.78, 18.00);
         hoodMap.put(4.0, 19.0);
@@ -124,6 +124,27 @@ public class ShooterSubsystem extends SubsystemBase {
             leds.idle();
         })
         .withName("Shooter.SmartShootSequence");
+    }
+
+    public Command prepareShoot(FeederSubsystem feeder, LEDSubsystem leds) 
+    {
+        return Commands.sequence(
+            Commands.runOnce(() -> {
+                double distance = distanceToHubSupplier.getAsDouble();
+                
+                double targetRPM = rpmMap.get(distance);
+                double targetHoodMm = hoodMap.get(distance);
+
+                flywheel.setTargetVelocity(RPM.of(targetRPM));
+                flywheel.spinUpToVelocity(RPM.of(targetRPM));
+                
+                hood.setExtensionMm(targetHoodMm);
+            }, this)
+        ).finallyDo( () -> {
+            flywheel.stopControl();
+            leds.idle();
+        }
+        ).withName("Shooter.SmartShootPrepare");
     }
 
     public Command testShootCommand(FeederSubsystem feeder, LEDSubsystem leds) {

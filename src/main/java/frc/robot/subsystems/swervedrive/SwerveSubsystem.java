@@ -697,6 +697,15 @@ public class SwerveSubsystem extends SubsystemBase
     addGyroOffsets(); // to counter anti-inversing of the gyro
   }
 
+  public void zeroGyroWithoutOdometry()
+  {
+    Pose2d robotPose = swerveDrive.getPose();
+    Rotation2d rotation = swerveDrive.getOdometryHeading();
+
+    zeroGyro();
+    resetOdometry(robotPose);
+  }
+
   public void addGyroOffsets() 
   {
     //since our IMU is upside down, we add offsets to it, so it is again "wheels to the floor"

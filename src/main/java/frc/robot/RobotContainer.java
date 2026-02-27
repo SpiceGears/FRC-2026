@@ -159,6 +159,16 @@ public class RobotContainer
     NamedCommands.registerCommand("shoot", shooter.shoot(feeder, leds, 3000).withTimeout(3));
     NamedCommands.registerCommand("shootLong", shooter.shoot(feeder, leds, 3000).withTimeout(10));
 
+    NamedCommands.registerCommand("prepareShoot", shooter.prepareShoot(feeder, leds).withTimeout(2));
+    NamedCommands.registerCommand("smartShoot", shooter.shootCommand(feeder, leds));
+    NamedCommands.registerCommand("aimAtHub", drivebase.aimAtHub(
+          () -> -driverXbox.getLeftY(), 
+          () -> -driverXbox.getLeftX()
+          ).withTimeout(3.5));
+    NamedCommands.registerCommand("intakeDeploy", intakePivot.deployCommand());
+    NamedCommands.registerCommand("intakeAgitate", IntakeCommands.agitate(intakePivot, intakeRollers));
+    NamedCommands.registerCommand("smartShootWithAgitate", Commands.parallel(shooter.shootCommand(feeder, leds), IntakeCommands.agitate(intakePivot, intakeRollers)));
+
 
     //Have the autoChooser pull in all PathPlanner autos as options
     autoChooser = AutoBuilder.buildAutoChooser();
@@ -269,7 +279,18 @@ public class RobotContainer
 
       
       //driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));
-      driverXbox.rightTrigger(0.1).whileTrue(shooter.shootCommand(feeder, leds));
+
+
+      /// # DRIVER SUGGESTION
+      driverXbox.rightTrigger(0.1).whileTrue(
+        Commands.sequence(
+          drivebase.aimAtHub(
+          () -> -driverXbox.getLeftY(), 
+          () -> -driverXbox.getLeftX()
+          ),
+          shooter.shootCommand(feeder, leds)
+        )
+        );
       
       //driverXbox.leftBumper().whileTrue(shooter.passFuelToShooter());
       //driverXbox.leftTrigger(0.1).whileTrue(shooterPasser.passShooter(() -> -1));
@@ -281,7 +302,12 @@ public class RobotContainer
       //driverXbox.povRight().onTrue(intakePivot.homingCommand());
 
       driverXbox.povLeft().whileTrue(intakePivot.deployCommand());
-      driverXbox.leftBumper().whileTrue(intakeRollers.runRollersCommand(RollerSpeed.INTAKE));
+      
+      driverXbox.leftBumper().whileTrue(
+        IntakeCommands.agitate(intakePivot, intakeRollers)
+      );
+
+      driverXbox.rightBumper().whileTrue(intakeRollers.runRollersCommand(RollerSpeed.INTAKE));
       //driverXbox.povDown().whileTrue(IntakeCommands.agitate(intakePivot, intakeRollers));
 
       leds.setDefaultCommand(leds.getDefaultDashboardCommand());
