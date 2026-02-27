@@ -1,84 +1,24 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.Amp;
-import static edu.wpi.first.units.Units.Centimeter;
-import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Meter;
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.RPM;
-
-import com.ctre.phoenix.motorcontrol.can.VictorSPX;
-import com.revrobotics.PersistMode;
-import com.revrobotics.ResetMode;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.PortMap;
-import yams.motorcontrollers.SmartMotorController;
-import yams.motorcontrollers.SmartMotorControllerConfig;
-import yams.motorcontrollers.SmartMotorControllerConfig.MotorMode;
-import yams.motorcontrollers.SmartMotorControllerConfig.TelemetryVerbosity;
-import yams.motorcontrollers.local.SparkWrapper;
 
 public class FeederSubsystem extends SubsystemBase {
 
-  // private SmartMotorControllerConfig feederControllerConfig = new SmartMotorControllerConfig(this)
-  // .withControlMode(SmartMotorControllerConfig.ControlMode.CLOSED_LOOP)
-  // .withClosedLoopController(5,0,0,RPM.of(6000), DegreesPerSecondPerSecond.of(90))
-  // .withMotorInverted(false)
-  // .withIdleMode(MotorMode.BRAKE)
-  // .withStatorCurrentLimit(Amp.of(20))
-  // .withGearing(1)
-  // .withTelemetry("FeederMotor", TelemetryVerbosity.LOW);
-  private PWMSparkMax feederMotor = new PWMSparkMax(PortMap.FEEDER_MOTOR_PWM);
-  private SparkMaxConfig feederMotorConfig = new SparkMaxConfig();
+  private final PWMSparkMax feederMotor;
 
-  //private SmartMotorController feederController = new SparkWrapper(feederMotor, DCMotor.getVex775Pro(1), feederControllerConfig);
-
-  /** Creates a new FeederSubsystem. */
-  public FeederSubsystem() 
-  {
-    feederMotorConfig
-    .inverted(false)
-    .smartCurrentLimit(20)
-    .idleMode(IdleMode.kCoast);
-
-    //feederMotor.configure(feederMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+  public FeederSubsystem() {
+    feederMotor = new PWMSparkMax(PortMap.FEEDER_MOTOR_PWM);
+    
+    feederMotor.setInverted(false); 
   }
 
-  @Override
-  public void periodic() {
-    // This method will be called once per scheduler run
-
-  }
-
-  public void feedShooter(double speed) 
-  {
-    // feederController.setVelocity(MetersPerSecond.of(Meter.convertFrom(speed, Centimeter)));
-    feederMotor.set(MathUtil.clamp(speed, -1, 1));
-  }
-
-  public Command feedShooter() {
-    return this.run(() -> feedShooter(1));
-  }
-
-  public void stop() 
-  {
-    //set desired duty cycle to 0, effectively stopping the mechanism
-    //feederController.setDutyCycle(0);
-    feederMotor.setVoltage(0);
+  public Command feedShooterCommand(double speed) {
+    return this.runEnd(
+        () -> feederMotor.set(speed), 
+        () -> feederMotor.set(0)
+    ).withName("Feeder.Run");
   }
 }

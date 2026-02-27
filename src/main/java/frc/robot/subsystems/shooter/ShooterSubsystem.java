@@ -1,241 +1,176 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot.subsystems.shooter;
 
-import static edu.wpi.first.units.Units.Millimeter;
 import static edu.wpi.first.units.Units.RPM;
 
-import edu.wpi.first.math.MathUtil;
+import java.util.function.DoubleSupplier;
+
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.commands.shooter.ShooterCycleCommand;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.led.LEDSubsystem;
 import frc.robot.subsystems.led.LEDSubsystem.LedColor;
-//import frc.robot.subsystems.vision.ShooterVisionAid;
 
 public class ShooterSubsystem extends SubsystemBase {
 
-  public final FlywheelSubsystem flywheel;
-  public final PasserSubsystem passer;
-  public final HoodSubsystem hood;
+    public final FlywheelSubsystem flywheel;
+    public final PasserSubsystem passer;
+    public final HoodSubsystem hood;
 
-  double currentFlywheelKey = 1.0;
-  double currentHoodKey = 1.0;
+    private final DoubleSupplier distanceToHubSupplier;
 
-  boolean enabled = false;
-  //final ShooterVisionAid svas; 
+    private final InterpolatingDoubleTreeMap rpmMap = new InterpolatingDoubleTreeMap();
+    private final InterpolatingDoubleTreeMap hoodMap = new InterpolatingDoubleTreeMap();
 
-  public ShooterSubsystem(FlywheelSubsystem flywheel, PasserSubsystem passer, HoodSubsystem hood) {
-    this.flywheel = flywheel;
-    this.passer = passer;
-    this.hood = hood;
+    public ShooterSubsystem(FlywheelSubsystem flywheel, PasserSubsystem passer, 
+      HoodSubsystem hood, DoubleSupplier distanceToHubSupplier) {
 
-    //this.svas = ShooterVisionAid.instance;
+        this.flywheel = flywheel;
+        this.passer = passer;
+        this.hood = hood;
+        this.distanceToHubSupplier = distanceToHubSupplier;
 
-    configureRPMAngleMaps();
-  }
+        loadShooterMaps();
 
-
-  private void configureRPMAngleMaps() 
-  {
-    // svas.addHoodPositionKey(0.0, 0);
-    // svas.addHoodPositionKey(1.0, 20);
-    // svas.addShooterRPMKey(0.0, 0.0);
-    // svas.addShooterRPMKey(1.0, 6000);
-  }
-
-  @Override
-  public void periodic() {
-    SmartDashboard.putBoolean("shooterEnabled", enabled);
-    //SmartDashboard.putNumber("shooterTargetRPM", svas.getRPM(svas.getCurrentOrCachedKey()).in(RPM));
-    //SmartDashboard.putNumber("shooterHoodMM", svas.getHoodPosition(svas.getCurrentOrCachedKey()).in(Millimeter));
-    //SmartDashboard.putNumber("shooterFlywheelInterpolationMapKey", currentFlywheelKey);
-    // This method will be called once per scheduler run
-    
-    // svas.telemetry(); //report telemtry from SVA system s
-  }
-
-  public void setFlywheelParameter(double key) 
-  {
-    currentFlywheelKey = MathUtil.clamp(key, 0.0, 1.0);
-  }
-
-  public void setHoodParameter(double key) {
-    currentHoodKey = MathUtil.clamp(key, 0.0, 1.0);
-  }
-
-  public void setParameters(double key)
-  {
-    key = MathUtil.clamp(key, 0.0, 1.0);
-
-    currentFlywheelKey = key;
-    currentHoodKey = key;
-  }
-
-  public Command setFlywheelParametersCommand(double key) 
-  {
-    return runOnce(() -> 
-    {
-      this.setFlywheelParameter(key);
-    });
-  }
-
-  public void applyParameters()
-  {
-    applyFlywheelParameter();
-    applyHoodParameter();
-    // return Commands.parallel(
-    //   flywheelCmd,
-    //   hoodCmd
-    // );
-  }
-
-  public void applyFlywheelParameter() 
-  {
-    if (currentFlywheelKey > 0.0) {
-      //double flywheelRPM = flywheelRPMMap.get(currentFlywheelKey);
-      //this.flywheel.setTargetVelocity(RPM.of(flywheelRPM));
-      //flywheel.spinUpToVelocity(RPM.of(flywheelRPM));
+        SmartDashboard.putNumber("TestShooter/Target RPM", 3000.0);
+        SmartDashboard.putNumber("TestShooter/Target Hood (mm)", 10.0);
     }
-    else flywheel.stopControl();
-  }
 
-  public void applyHoodParameter() 
-  {
-    //double hoodPosition = hoodPositionMap.get(currentHoodKey);
-    //hood.setLenghtMM(hoodPosition);
-  }
+    private void loadShooterMaps() {
+        rpmMap.put(1.24,3500.0);
+        rpmMap.put(1.5, 3600.0);
+        rpmMap.put(1.71, 3700.0);
+        rpmMap.put(2.11, 3900.0);
+        rpmMap.put(2.56, 4000.0);
+        rpmMap.put(2.57, 4300.0);
+        rpmMap.put(2.73, 4500.0);
+        rpmMap.put(3.14, 4150.0);
+        rpmMap.put(3.28, 4350.0);
+        rpmMap.put(3.5, 4300.0);
+        rpmMap.put(3.78, 4400.0);
+        rpmMap.put(4.0, 4700.0);
+        rpmMap.put(4.2, 4650.0);
+        rpmMap.put(4.56, 4800.0);
+        rpmMap.put(4.6, 4800.0);
+        rpmMap.put(5.2, 5000.0);
 
+        hoodMap.put(1.24,10.0);
+        hoodMap.put(1.5, 10.0);
+        hoodMap.put(1.71, 11.0);
+        hoodMap.put(2.11, 12.0);
+        hoodMap.put(2.56, 14.0);
+        hoodMap.put(2.57, 14.0);
+        hoodMap.put(2.73, 15.0);
+        hoodMap.put(3.14, 16.0);
+        hoodMap.put(3.28, 18.0);
+        hoodMap.put(3.5, 16.5);
+        hoodMap.put(3.78, 18.00);
+        hoodMap.put(4.0, 19.0);
+        hoodMap.put(4.2, 18.0);
+        hoodMap.put(4.56, 20.0);
+        hoodMap.put(4.6, 20.0);
+        hoodMap.put(5.2, 22.5);
+    }
 
-  public void start() 
-  {
-    this.enabled = true;
-    setFlywheelParameter(0.95);
-    applyParameters();
-  }
+    @Override
+    public void periodic() {
+        // --- TELEMETRIA DIAGNOSTYCZNA NA ŻYWO ---
 
-  public void stop() 
-  {
-    this.enabled = false;
-    setFlywheelParameter(0.0);
-    applyParameters();
-  }
+        SmartDashboard.putNumber("TestShooter/DISTANCE TO HUB (m)", distanceToHubSupplier.getAsDouble());
+        
+        // Stan Flywheela
+        SmartDashboard.putNumber("TestShooter/Current RPM", flywheel.getVelocity().in(RPM));
+        SmartDashboard.putBoolean("TestShooter/Is Flywheel Ready", flywheel.isAtTargetVelocity());
 
-  public Command stopCmd() 
-  {
+        // Stan Kaptura
+        SmartDashboard.putNumber("TestShooter/Current Hood (mm)", hood.getTargetExtensionMm());
+        
+        // Ogólna gotowość (żebyś widział zieloną/czerwoną lampkę na dashboardzie)
+        boolean isReadyToShoot = flywheel.isAtTargetVelocity();
+        SmartDashboard.putBoolean("TestShooter/READY TO FIRE", isReadyToShoot);
+    }
 
-    // return setFlywheelParametersCommand(0).andThen(applyParameters());
-    return runOnce(() -> 
-    {
-      // this.enabled = false;
-      // setFlywheelParameter(0.0);
-      // applyParameters();
-      stop();
-    });
-  }
+    public Command shootCommand(FeederSubsystem feeder, LEDSubsystem leds) {
+        return Commands.sequence(
+            
+            // KROK 1: Pobierz dystans na żywo, wyciągnij z map wartości i przypisz do silników
+            Commands.runOnce(() -> {
+                double distance = distanceToHubSupplier.getAsDouble();
+                
+                double targetRPM = rpmMap.get(distance);
+                double targetHoodMm = hoodMap.get(distance);
 
-  public Command toggleEnabledCmd() 
-  {
-    return runOnce(() -> 
-    {
-      toggleEnabled();
-    });
-  }
+                flywheel.setTargetVelocity(RPM.of(targetRPM));
+                flywheel.spinUpToVelocity(RPM.of(targetRPM));
+                
+                hood.setExtensionMm(targetHoodMm);
+            }, this),
 
-  public void adjustHood(double addedKey) 
-  {
-    currentHoodKey += addedKey;
-    currentHoodKey = MathUtil.clamp(currentHoodKey, 0, 1);
-    setHoodParameter(currentHoodKey);
-    applyHoodParameter();
-  }
+            // KROK 2: Poczekaj na rozpędzenie Flywheela i wysunięcie Kaptura
+            Commands.waitUntil(() -> flywheel.isAtTargetVelocity()),
 
-  public void toggleEnabled() 
-  {
-      if (!enabled) start();
-      else stop();
-  }
+            // KROK 3: Odpal systemy podające piłkę i LEDy
+            Commands.parallel(
+                leds.setColorCommand(LedColor.MAGENTA),
+                passer.runPasserCommand(0.9),
+                feeder.feedShooterCommand(1.0)
+            )
+            
+        ).finallyDo(() -> {
+            // KROK 4: Bezpieczne uśpienie całego systemu po puszczeniu przycisku
+            flywheel.stopControl();
+            leds.idle();
+        })
+        .withName("Shooter.SmartShootSequence");
+    }
 
-  public Command passFuelToShooter() 
-  {
-    return runEnd(() -> this.passer.passFuelToShooter(() -> true), 
-    () -> this.passer.passFuelToShooter(() -> false)
-    );
-  }
+    public Command testShootCommand(FeederSubsystem feeder, LEDSubsystem leds) {
+        return Commands.sequence(
+            
+            // KROK 1: Odczyt wartości "z palca" i wprawienie mechanizmów w ruch
+            Commands.runOnce(() -> {
+                double targetRPM = SmartDashboard.getNumber("TestShooter/Target RPM", 3000.0);
+                double targetHoodMm = SmartDashboard.getNumber("TestShooter/Target Hood (mm)", 10.0);
 
-  public boolean isEnabled() 
-  {
-    return this.enabled;
-  }
+                flywheel.setTargetVelocity(RPM.of(targetRPM));
+                flywheel.spinUpToVelocity(RPM.of(targetRPM));
+                
+                hood.setExtensionMm(targetHoodMm);
+            }, this),
 
+            // KROK 2: Czekamy na zielone światło od Flywheela i Kaptura
+            Commands.waitUntil(() -> flywheel.isAtTargetVelocity()),
 
+            // KROK 3: Odpalamy podawanie piłki i sygnalizację LED
+            Commands.parallel(
+                leds.setColorCommand(LedColor.MAGENTA),
+                passer.runPasserCommand(0.9),
+                feeder.feedShooterCommand(1.0)
+            )
+            
+        ).finallyDo(() -> {
+            // KROK 4: Bezpieczne uśpienie całego systemu po puszczeniu przycisku
+            flywheel.stopControl();
+            leds.idle();
+            
+            // Passer i Feeder mają wbudowane zatrzymanie w runEnd(), więc wyłączą się same
+        })
+        .withName("Shooter.TestShootSequence");
+    }
 
-  /** 
-   * shoot with adaptable speed calculated by distance with ShooterVisionAid subsystem 
-  */
-  // public Command shootAdaptable(FeederSubsystem feeder, LEDSubsystem leds) {
-  //   //double hardcodedRPM = setpoint;
+    public Command shoot(FeederSubsystem feeder, LEDSubsystem leds, int set) {
+      return Commands.none();
+    }
 
-  //   return Commands.sequence(
-  //       // KROK 1: Ustawienie celu i rozkręcenie koła zamachowego
-  //       Commands.runOnce(() -> {
-  //           AngularVelocity flywheelRPM = svas.getRPM(svas.getCurrentOrCachedKey());
-  //           flywheel.setTargetVelocity(flywheelRPM);
-  //           flywheel.spinUpToVelocity(flywheelRPM);
-  //       }, this),
-
-  //       // KROK 2: Czekamy, aż koło zamachowe osiągnie zadane RPM
-  //       // UWAGA: Zakładam, że masz metodę typu `isAtSetpoint()` w FlywheelSubsystem.
-  //       Commands.waitUntil(() -> flywheel.isAtTargetVelocity()),
-
-  //       Commands.parallel(
-  //           leds.setColorCommand(LedColor.MAGENTA),
-  //           this.passFuelToShooter(),
-  //           feeder.feedShooter() // Podmień na rzeczywistą nazwę komendy z Twojego FeederSubsystem
-  //       )
-  //   )
-  //   .finallyDo(() -> {
-  //       // KROK 4: Gdy komenda się zakończy (lub zostanie przerwana), zatrzymaj koło.
-  //       // Passer i Feeder wyłączą się automatycznie, bo ich komendy przestaną być aktywne.
-  //       flywheel.stopControl();
-  //       leds.idle();
-  //   })
-  //   .withName("AutoShootSequence");
-  // }
-
-  public Command shoot(FeederSubsystem feeder, LEDSubsystem leds, double setpoint) {
-    double hardcodedRPM = setpoint;
-
-    return Commands.sequence(
-        // KROK 1: Ustawienie celu i rozkręcenie koła zamachowego
-        Commands.runOnce(() -> {
-            flywheel.setTargetVelocity(RPM.of(hardcodedRPM));
-            flywheel.spinUpToVelocity(RPM.of(hardcodedRPM));
-        }, this),
-
-        // KROK 2: Czekamy, aż koło zamachowe osiągnie zadane RPM
-        // UWAGA: Zakładam, że masz metodę typu `isAtSetpoint()` w FlywheelSubsystem.
-        Commands.waitUntil(() -> flywheel.isAtTargetVelocity()),
-
-        Commands.parallel(
-            leds.setColorCommand(LedColor.MAGENTA),
-            this.passFuelToShooter(),
-            feeder.feedShooter() // Podmień na rzeczywistą nazwę komendy z Twojego FeederSubsystem
-        )
-    )
-    .finallyDo(() -> {
-        // KROK 4: Gdy komenda się zakończy (lub zostanie przerwana), zatrzymaj koło.
-        // Passer i Feeder wyłączą się automatycznie, bo ich komendy przestaną być aktywne.
-        flywheel.stopControl();
-        leds.idle();
-    })
-    .withName("AutoShootSequence");
-  }
+    // ==========================================
+    // METODA POMOCNICZA: Awaryjne zatrzymanie
+    // ==========================================
+    public Command stopEverythingCommand() {
+        return Commands.runOnce(() -> {
+            flywheel.stopControl();
+            passer.runPasserCommand(0).cancel();
+        }, this).withName("Shooter.EmergencyStop");
+    }
 }

@@ -24,11 +24,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.feeder.FeederFeedShooterCommand;
 import frc.robot.commands.intake.IntakeCommands;
 import frc.robot.commands.intake.IntakeFuel;
 //import frc.robot.commands.shooter.AutoHoodAdjustment;
-import frc.robot.commands.shooter.ShooterCycleCommand;
 import frc.robot.commands.swervedrive.AimAndDriveCommand;
 //import frc.robot.commands.swervedrive.SwerveAimAt;
 import frc.robot.subsystems.ClimbSubsystem;
@@ -145,7 +143,9 @@ public class RobotContainer
 
   //final ShooterVisionAid svas = new ShooterVisionAid(drivebase::getPose);
 
-  final ShooterSubsystem shooter = new ShooterSubsystem(shooterFlywheel, shooterPasser, hood);
+  final ShooterSubsystem shooter = new ShooterSubsystem(shooterFlywheel, shooterPasser, hood, 
+    () -> drivebase.getPose().getTranslation().getDistance(Landmarks.hubPosition()) );
+  
   public RobotContainer()
   {
     // Configure the trigger bindings
@@ -247,14 +247,14 @@ public class RobotContainer
     {
 
       //intake.setDefaultCommand(intake.setAngleCmd(Degrees.of(90)));
-      shooter.setDefaultCommand(new ShooterCycleCommand(shooter));
+      //shooter.setDefaultCommand(new ShooterCycleCommand(shooter));
       //climb.setDefaultCommand(climb.setHeight(Meters.of(0.12)));
 
       //hood.setDefaultCommand(new AutoHoodAdjustment(hood));
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       //driverXbox.x().onTrue(shooter.toggleEnabledCmd());
       //driverXbox.x().whileTrue(shooter.shootAdaptable(feeder, leds));
-      driverXbox.y().whileTrue(shooter.shoot(feeder, leds, 4000));
+      //driverXbox.y().whileTrue(shooter.shoot(feeder, leds, 4000));
       //driverXbox.b().whileTrue(new SwerveAimAt(drivebase));
       //driverXbox.y().onTrue(shooter.stop());
       //driverXbox.start().onTrue(intake.setAngle(Degrees.of(90)));
@@ -264,25 +264,25 @@ public class RobotContainer
       //feeder.setDefaultCommand(new FeederFeedShooterCommand(feeder, driverXbox.rightBumper()));
 
 
-      driverXbox.leftBumper().whileTrue(climb.runManualCommand(-10));
-      driverXbox.rightBumper().whileTrue(climb.runManualCommand(10));
+      //driverXbox.leftBumper().whileTrue(climb.runManualCommand(-10));
+      //driverXbox.rightBumper().whileTrue(climb.runManualCommand(10));
 
       
       //driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));
-      
+      driverXbox.rightTrigger(0.1).whileTrue(shooter.shootCommand(feeder, leds));
       
       //driverXbox.leftBumper().whileTrue(shooter.passFuelToShooter());
       //driverXbox.leftTrigger(0.1).whileTrue(shooterPasser.passShooter(() -> -1));
       // driverXbox.povUp().onTrue(intake.adjustIntake(Degrees.of(5)));
       // driverXbox.povDown().onTrue(intake.adjustIntake(Degrees.of(-5)));
 
-      //driverXbox.povUp().onTrue(Commands.runOnce(() -> shooter.adjustHood(0.1), shooter));
-      //driverXbox.povDown().onTrue(Commands.runOnce(() -> shooter.adjustHood(-0.1), shooter));
+      driverXbox.povUp().onTrue(Commands.runOnce(() -> hood.setExtensionMm(28)));
+      driverXbox.povDown().onTrue(Commands.runOnce(() -> hood.setExtensionMm(5)));
       //driverXbox.povRight().onTrue(intakePivot.homingCommand());
 
       driverXbox.povLeft().whileTrue(intakePivot.deployCommand());
-      driverXbox.povUp().whileTrue(intakeRollers.runRollersCommand(RollerSpeed.INTAKE));
-      driverXbox.povDown().whileTrue(IntakeCommands.agitate(intakePivot, intakeRollers));
+      driverXbox.leftBumper().whileTrue(intakeRollers.runRollersCommand(RollerSpeed.INTAKE));
+      //driverXbox.povDown().whileTrue(IntakeCommands.agitate(intakePivot, intakeRollers));
 
       leds.setDefaultCommand(leds.getDefaultDashboardCommand());
 

@@ -4,8 +4,12 @@
 
 package frc.robot.subsystems.swervedrive;
 
+import static edu.wpi.first.units.Units.Centimeter;
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.Meter;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Radian;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -21,6 +25,7 @@ import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -29,9 +34,11 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -42,13 +49,13 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
 import frc.robot.Constants.DrivebaseConstants;
 import frc.robot.Landmarks;
-import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.subsystems.swervedrive.Vision.Cameras;
 //import frc.robot.subsystems.vision.limelight.AprilTagVisionSubsystem;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.DoubleSupplier;
@@ -65,6 +72,13 @@ import swervelib.parser.SwerveDriveConfiguration;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
+import limelight.Limelight;
+import limelight.networktables.AngularVelocity3d;
+import limelight.networktables.LimelightPoseEstimator;
+import limelight.networktables.LimelightPoseEstimator.EstimationMode;
+import limelight.networktables.Orientation3d;
+import limelight.networktables.LimelightResults;
+import limelight.networktables.PoseEstimate;
 
 public class SwerveSubsystem extends SubsystemBase
 {
@@ -84,6 +98,9 @@ public class SwerveSubsystem extends SubsystemBase
   //private       Vision      vision;
 
   //private final AprilTagVisionSubsystem vision;
+
+  Limelight limelight;
+  LimelightPoseEstimator limelightPoseEstimator;
 
   private Field2d field = new Field2d();
 
@@ -122,19 +139,40 @@ public class SwerveSubsystem extends SubsystemBase
     swerveDrive.setModuleEncoderAutoSynchronize(false,
                                                 1); // Enable if you want to resynchronize your absolute encoders and motor encoders periodically when they are not moving.
     // swerveDrive.pushOffsetsToEncoders(); // Set the absolute encoder to be used over the internal encoder and push the offsets onto it. Throws warning if not possible
-    if (DrivebaseConstants.USE_VISION)
-    {
-      //setupPhotonVision();
-      // Stop the odometry thread if we are using vision that way we can synchronize updates better.
-      swerveDrive.stopOdometryThread();
-    }
+    // if (DrivebaseConstants.USE_VISION)
+    // {
+    //   //setupPhotonVision();
+    //   // Stop the odometry thread if we are using vision that way we can synchronize updates better.
+    //   swerveDrive.stopOdometryThread();
+    // }
     //vision.imu = this.swerveDrive.getGyro();
     setupPathPlanner();
 
-
+    setupLimelight();
     //addGyroOffsets();
 
     
+  }
+
+  public void setupLimelight() {
+    swerveDrive.stopOdometryThread();
+    limelight = new Limelight("limelight");
+    limelight.getSettings()
+               .withPipelineIndex(0)
+               .withCameraOffset(new Pose3d(
+                          Centimeter.of(0),
+                          Centimeter.of(0),
+                          Centimeter.of(56),
+                          
+                          new Rotation3d(
+                            Radian.of(0),
+                            Degrees.of(11),
+                            Degrees.of(0)
+                          )
+                        ))
+               .withAprilTagIdFilter(List.of(25, 26, 27, 18))
+               .save();
+      limelightPoseEstimator = limelight.createPoseEstimator(EstimationMode.MEGATAG2);
   }
 
   /**
@@ -166,19 +204,54 @@ public class SwerveSubsystem extends SubsystemBase
   @Override
   public void periodic()
   {
-    // When vision is enabled we must manually update odometry in SwerveDrive
-    // if (DrivebaseConstants.USE_VISION)
-    // {
-      
-    //   Optional<limelight.networktables.PoseEstimate> visionPose = vision.getEstimatedPose();
-    //   if (visionPose.isPresent())
-    //   {
-    //     swerveDrive.addVisionMeasurement(visionPose.get().pose.toPose2d(), visionPose.get().timestampSeconds);
-    //   }
-    //   //vision.updatePoseEstimation(swerveDrive);
-    //   swerveDrive.updateOdometry();
-    // }
+    limelight.getSettings()
+        .withRobotOrientation(new Orientation3d(
+            new Rotation3d(swerveDrive.getOdometryHeading().rotateBy(Rotation2d.kZero)),
+            new AngularVelocity3d(DegreesPerSecond.of(0), DegreesPerSecond.of(0), DegreesPerSecond.of(0))
+        )).save();
 
+    // 2. Pobranie estymacji pozycji
+    Optional<PoseEstimate> poseEstimates = limelightPoseEstimator.getPoseEstimate();
+    
+    if (poseEstimates.isPresent())
+    {
+        PoseEstimate poseEstimate = poseEstimates.get();
+        
+        // Zabezpieczenie: Aktualizujemy tylko, jeśli kamera faktycznie widzi jakiegoś AprilTaga
+        if (poseEstimate.tagCount > 0) 
+        {
+            // Pobieramy gotową pozycję z PoseEstimate i konwertujemy na 2D. 
+            // YALL domyślnie używa Blue Alliance Origin dla PoseEstimate, co idealnie pasuje do PathPlannera!
+            Pose2d visionPose = poseEstimate.pose.toPose2d();
+
+            // DYNAMICZNE ODCHYLENIA STANDARDOWE (Sensor Fusion)
+            // Bazowe zaufanie to 0.1 metra. Im dalej od taga, tym gorzej (dodajemy kwadrat dystansu).
+            double xyStdDev = 0.1 + (Math.pow(poseEstimate.avgTagDist, 2) * 0.1);
+            
+            // Jeśli Limelight widzi więcej niż 1 taga naraz, drastycznie zwiększamy dokładność (ufamy mu 2x bardziej)
+            if (poseEstimate.tagCount > 1) {
+                xyStdDev *= 0.5; 
+            }
+
+            // Aplikujemy odchylenia: X, Y dynamicznie. 
+            // Theta (kąt) na 9999999.0 -> Mówimy YAGSL: "NIGDY nie ufaj kamerze w kwestii kąta, słuchaj tylko Pigeon2!"
+            swerveDrive.setVisionMeasurementStdDevs(VecBuilder.fill(xyStdDev, xyStdDev, 9999999.0));
+
+            // Wrzucamy poprawkę do odometrii YAGSL
+            swerveDrive.addVisionMeasurement(visionPose, poseEstimate.timestampSeconds);
+        }
+
+        // Telemetria diagnostyczna
+        SmartDashboard.putNumber("Limelight/Tag Count", poseEstimate.tagCount);
+        SmartDashboard.putNumber("Limelight/Avg Distance", poseEstimate.avgTagDist);
+        SmartDashboard.putNumber("Limelight/Pose X", poseEstimate.pose.getX());
+        SmartDashboard.putNumber("Limelight/Pose Y", poseEstimate.pose.getY());
+    }
+
+    // Zawsze aktualizujemy bazową odometrię na końcu
+    swerveDrive.updateOdometry();
+
+    // Rysowanie na SmartDashboard/Elastic
     field.setRobotPose(getPose());
     SmartDashboard.putData("RobotOdometry", field);
   }
@@ -336,7 +409,7 @@ public class SwerveSubsystem extends SubsystemBase
     return AutoBuilder.pathfindToPose(
         pose,
         constraints,
-        edu.wpi.first.units.Units.MetersPerSecond.of(0) // Goal end velocity in meters/sec
+        MetersPerSecond.of(0) // Goal end velocity in meters/sec
                                      );
   }
 
