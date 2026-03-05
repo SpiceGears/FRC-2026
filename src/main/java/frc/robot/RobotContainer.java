@@ -6,7 +6,6 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -25,11 +24,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.intake.IntakeCommands;
-import frc.robot.commands.intake.IntakeFuel;
-//import frc.robot.commands.shooter.AutoHoodAdjustment;
-import frc.robot.commands.swervedrive.AimAndDriveCommand;
-//import frc.robot.commands.swervedrive.SwerveAimAt;
-import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.IntakePivotSubsystem;
 import frc.robot.subsystems.IntakeRollersSubsystem;
@@ -44,11 +38,6 @@ import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 //import frc.robot.subsystems.vision.ShooterVisionAid;
 //import frc.robot.subsystems.vision.limelight.AprilTagVisionSubsystem;
 
-import static edu.wpi.first.units.Units.Centimeters;
-import static edu.wpi.first.units.Units.Degree;
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
-
 import java.io.File;
 import swervelib.SwerveInputStream;
 
@@ -62,7 +51,7 @@ public class RobotContainer
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   final         CommandXboxController driverXbox = new CommandXboxController(0);
-  final CommandXboxController copilotXbox = new CommandXboxController(1);
+  //final CommandXboxController copilotXbox = new CommandXboxController(1);
 
   //final AprilTagVisionSubsystem aprilTagVisionSubsystem = new AprilTagVisionSubsystem();
 
@@ -135,7 +124,7 @@ public class RobotContainer
   final IntakeRollersSubsystem intakeRollers = new IntakeRollersSubsystem();
   final FlywheelSubsystem shooterFlywheel = new FlywheelSubsystem();
   final FeederSubsystem feeder = new FeederSubsystem();
-  final ClimbSubsystem climb = new ClimbSubsystem();
+  //final ClimbSubsystem climb = new ClimbSubsystem();
   final PasserSubsystem shooterPasser = new PasserSubsystem();
   final HoodSubsystem hood = new HoodSubsystem();
 
@@ -154,32 +143,23 @@ public class RobotContainer
     
     DriverStation.silenceJoystickConnectionWarning(true);
     
-    //Create the NamedCommands that will be used in PathPlanner
-    NamedCommands.registerCommand("test", Commands.print("I EXIST"));
-    NamedCommands.registerCommand("shoot", shooter.shoot(feeder, leds, 3000).withTimeout(3));
-    NamedCommands.registerCommand("shootLong", shooter.shoot(feeder, leds, 3000).withTimeout(10));
+    //Create the NamedCommands that will be used in PathPlanner 
 
-    NamedCommands.registerCommand("prepareShoot", shooter.prepareShoot(feeder, leds).withTimeout(2));
+    NamedCommands.registerCommand("prepareShoot", shooter.prepareShoot(feeder).withTimeout(2));
     NamedCommands.registerCommand("smartShoot", shooter.shootCommand(feeder, leds));
-    NamedCommands.registerCommand("aimAtHub", drivebase.aimAtHub(
-          () -> -driverXbox.getLeftY(), 
-          () -> -driverXbox.getLeftX()
-          ).withTimeout(3.5));
+    NamedCommands.registerCommand("aimAtHub", drivebase.autoAimAtHubCommand());
+    NamedCommands.registerCommand("aimAndShoot", Commands.sequence(drivebase.autoAimAtHubCommand(), shooter.shootCommand(feeder, leds)).withTimeout(5));
     NamedCommands.registerCommand("intakeDeploy", intakePivot.deployCommand());
     NamedCommands.registerCommand("intakeAgitate", IntakeCommands.agitate(intakePivot, intakeRollers));
-    NamedCommands.registerCommand("smartShootWithAgitate", Commands.parallel(shooter.shootCommand(feeder, leds), IntakeCommands.agitate(intakePivot, intakeRollers)));
-
+    NamedCommands.registerCommand("shootWithAgitate", Commands.parallel(shooter.shootCommand(feeder, leds), IntakeCommands.agitate(intakePivot, intakeRollers)).withTimeout(8));
+    NamedCommands.registerCommand("intakeBalls", intakeRollers.runRollersCommand(RollerSpeed.INTAKE).withTimeout(5));
+    //NamedCommands.registerCommand("openHopper", climb.open().withTimeout(0.5));
 
     //Have the autoChooser pull in all PathPlanner autos as options
     autoChooser = AutoBuilder.buildAutoChooser();
 
     //Set the default auto (do nothing) 
     autoChooser.setDefaultOption("Do Nothing", Commands.none());
-
-    //Add a simple auto option to have the robot drive forward for 1 second then stop
-    autoChooser.addOption("Drive Forward", drivebase.driveForward().withTimeout(1));
-
-    autoChooser.addOption("Forward", drivebase.getAutonomousCommand("test"));
     
     //Put the autoChooser on the SmartDashboard
     SmartDashboard.putData("Auto Chooser", autoChooser);
@@ -261,7 +241,7 @@ public class RobotContainer
       //climb.setDefaultCommand(climb.setHeight(Meters.of(0.12)));
 
       //hood.setDefaultCommand(new AutoHoodAdjustment(hood));
-      driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
+      driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyroWithAlliance)));
       //driverXbox.x().onTrue(shooter.toggleEnabledCmd());
       //driverXbox.x().whileTrue(shooter.shootAdaptable(feeder, leds));
       //driverXbox.y().whileTrue(shooter.shoot(feeder, leds, 4000));
@@ -274,8 +254,8 @@ public class RobotContainer
       //feeder.setDefaultCommand(new FeederFeedShooterCommand(feeder, driverXbox.rightBumper()));
 
 
-      //driverXbox.leftBumper().whileTrue(climb.runManualCommand(-10));
-      //driverXbox.rightBumper().whileTrue(climb.runManualCommand(10));
+      // driverXbox.povUp().whileTrue(climb.runManualCommand(-10));
+      // driverXbox.povDown().whileTrue(climb.runManualCommand(10));
 
       
       //driverXbox.rightTrigger(0.1).whileTrue(new IntakeFuel(intake));
@@ -283,7 +263,7 @@ public class RobotContainer
 
       /// # DRIVER SUGGESTION
       driverXbox.rightTrigger(0.1).whileTrue(
-        Commands.sequence(
+        Commands.parallel(
           drivebase.aimAtHub(
           () -> -driverXbox.getLeftY(), 
           () -> -driverXbox.getLeftX()
@@ -291,34 +271,60 @@ public class RobotContainer
           shooter.shootCommand(feeder, leds)
         )
         );
+      driverXbox.leftTrigger().whileTrue(shooter.shootCommand(feeder, leds));
+
+      // driverXbox.rightTrigger(0.1).whileTrue(
+      //   shooter.shootCommand(feeder, leds)
+      // );
       
       //driverXbox.leftBumper().whileTrue(shooter.passFuelToShooter());
-      //driverXbox.leftTrigger(0.1).whileTrue(shooterPasser.passShooter(() -> -1));
+      //driverXbox.leftTrigger(0.1).whileTrue(shooterPasser.runPasserCommand(1));
       // driverXbox.povUp().onTrue(intake.adjustIntake(Degrees.of(5)));
       // driverXbox.povDown().onTrue(intake.adjustIntake(Degrees.of(-5)));
 
-      driverXbox.povUp().onTrue(Commands.runOnce(() -> hood.setExtensionMm(28)));
-      driverXbox.povDown().onTrue(Commands.runOnce(() -> hood.setExtensionMm(5)));
+      //driverXbox.povUp().onTrue(Commands.runOnce(() -> hood.setExtensionMm(28)));
+      //driverXbox.povDown().onTrue(Commands.runOnce(() -> hood.setExtensionMm(5)));
       //driverXbox.povRight().onTrue(intakePivot.homingCommand());
 
       driverXbox.povLeft().whileTrue(intakePivot.deployCommand());
       
-      driverXbox.leftBumper().whileTrue(
-        IntakeCommands.agitate(intakePivot, intakeRollers)
-      );
+      // driverXbox.leftBumper().whileTrue(
+      //   IntakeCommands.agitate(intakePivot, intakeRollers)
+      // );
 
-      driverXbox.rightBumper().whileTrue(intakeRollers.runRollersCommand(RollerSpeed.INTAKE));
+      driverXbox.leftBumper().whileTrue(
+        intakeRollers.runRollersCommand(RollerSpeed.OUTTAKE)
+        .alongWith(feeder.feedShooterCommand(-1))
+        .alongWith(shooter.reversePasser())
+        .alongWith(leds.holdColorCommand(LedColor.RED))
+        .finallyDo(
+          () -> leds.idle()
+        )
+        );
+      driverXbox.rightBumper().whileTrue(intakeRollers.runRollersCommand(RollerSpeed.INTAKE).alongWith(intakePivot.deployCommand()));
       //driverXbox.povDown().whileTrue(IntakeCommands.agitate(intakePivot, intakeRollers));
 
       leds.setDefaultCommand(leds.getDefaultDashboardCommand());
 
+      // copilotXbox.rightBumper().whileTrue(
+      //   intakeRollers.runRollersCommand(RollerSpeed.OUTTAKE)
+      //   .alongWith(feeder.feedShooterCommand(-1))
+      //   .alongWith(shooter.reversePasser())
+      //   .alongWith(leds.holdColorCommand(LedColor.RED))
+      //   .finallyDo(
+      //     () -> leds.idle()
+      //   )
+      //   );
+
+      // copilotXbox.leftBumper().whileTrue(intakePivot.deployCommand());
+
       //driverXbox.leftTrigger().whileTrue(new AimAndDriveCommand(drivebase));
-      driverXbox.leftTrigger().whileTrue(
-        drivebase.aimAtHub(
-        () -> -driverXbox.getLeftY(), 
-        () -> -driverXbox.getLeftX()
-      )
-);
+//       driverXbox.leftTrigger().whileTrue(
+//         drivebase.aimAtHub(
+//         () -> -driverXbox.getLeftY(), 
+//         () -> -driverXbox.getLeftX()
+//       )
+// );
       //driverXbox.leftBumper().whileTrue(leds.setColorCommand(LedColor.BLUE));
     }
 

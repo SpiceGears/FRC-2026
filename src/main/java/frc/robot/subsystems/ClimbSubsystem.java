@@ -42,4 +42,11 @@ public class ClimbSubsystem extends SubsystemBase {
             this
         ).withName("Climb.Manual");
     }
+
+    public Command open() {
+        return Commands.startEnd(
+            () -> climbMotor.setVoltage(-10), 
+            () -> climbMotor.setVoltage(0)
+            );
+    }
 }

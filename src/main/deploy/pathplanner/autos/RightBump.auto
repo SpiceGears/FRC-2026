@@ -1,0 +1,62 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "AlignToHub"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intakeDeploy"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "smartShoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "HubToOutpost"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 2.5
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "OutpostScore"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "smartShoot"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

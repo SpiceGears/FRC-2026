@@ -149,7 +149,7 @@ public class SwerveSubsystem extends SubsystemBase
     setupPathPlanner();
 
     setupLimelight();
-    //addGyroOffsets();
+    addGyroOffsets();
 
     
   }
@@ -170,7 +170,6 @@ public class SwerveSubsystem extends SubsystemBase
                             Degrees.of(0)
                           )
                         ))
-               .withAprilTagIdFilter(List.of(25, 26, 27, 18))
                .save();
       limelightPoseEstimator = limelight.createPoseEstimator(EstimationMode.MEGATAG2);
   }
@@ -206,7 +205,7 @@ public class SwerveSubsystem extends SubsystemBase
   {
     limelight.getSettings()
         .withRobotOrientation(new Orientation3d(
-            new Rotation3d(swerveDrive.getOdometryHeading().rotateBy(Rotation2d.kZero)),
+            new Rotation3d(swerveDrive.getOdometryHeading()),
             new AngularVelocity3d(DegreesPerSecond.of(0), DegreesPerSecond.of(0), DegreesPerSecond.of(0))
         )).save();
 
@@ -229,7 +228,7 @@ public class SwerveSubsystem extends SubsystemBase
             double xyStdDev = 0.1 + (Math.pow(poseEstimate.avgTagDist, 2) * 0.1);
             
             // Jeśli Limelight widzi więcej niż 1 taga naraz, drastycznie zwiększamy dokładność (ufamy mu 2x bardziej)
-            if (poseEstimate.tagCount > 1) {
+            if (poseEstimate.tagCount >= 2) {
                 xyStdDev *= 0.5; 
             }
 
@@ -378,6 +377,33 @@ public class SwerveSubsystem extends SubsystemBase
 
       drive(getTargetSpeeds(vxMetersPerSecond, vyMetersPerSecond, targetHeading));
     }).withName("AimAtHub");
+  }
+
+  public Command autoAimAtHubCommand() {
+    double toleranceDegrees = 3.0;
+
+    return run(() -> {
+      Pose2d robotPos = getPose();
+      Translation2d hubPos = Landmarks.hubPosition();
+      
+      Rotation2d targetHeading = hubPos.minus(robotPos.getTranslation()).getAngle();
+      
+      SmartDashboard.putNumber("Aiming/AutoError (deg)", targetHeading.minus(robotPos.getRotation()).getDegrees());
+
+      drive(getTargetSpeeds(0.0, 0.0, targetHeading));
+    })
+    .until(() -> {
+      Pose2d robotPos = getPose();
+      Rotation2d targetHeading = Landmarks.hubPosition().minus(robotPos.getTranslation()).getAngle();
+      
+      double error = Math.abs(targetHeading.minus(robotPos.getRotation()).getDegrees());
+      
+      return error <= toleranceDegrees;
+    })
+    .finallyDo(() -> {
+      setChassisSpeeds(new ChassisSpeeds(0, 0, 0));
+    })
+    .withName("AutoAimAtHub");
   }
 
   /**
@@ -697,14 +723,14 @@ public class SwerveSubsystem extends SubsystemBase
     addGyroOffsets(); // to counter anti-inversing of the gyro
   }
 
-  public void zeroGyroWithoutOdometry()
-  {
-    Pose2d robotPose = swerveDrive.getPose();
-    Rotation2d rotation = swerveDrive.getOdometryHeading();
+  // public void zeroGyroWithoutOdometry()
+  // {
+  //   Pose2d robotPose = swerveDrive.getPose();
+  //   Rotation2d rotation = swerveDrive.getOdometryHeading();
 
-    zeroGyro();
-    resetOdometry(robotPose);
-  }
+  //   zeroGyro();
+  //   resetOdometry(robotPose);
+  // }
 
   public void addGyroOffsets() 
   {

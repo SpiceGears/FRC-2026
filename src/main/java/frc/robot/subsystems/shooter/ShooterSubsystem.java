@@ -87,7 +87,6 @@ public class ShooterSubsystem extends SubsystemBase {
         // Stan Kaptura
         SmartDashboard.putNumber("TestShooter/Current Hood (mm)", hood.getTargetExtensionMm());
         
-        // Ogólna gotowość (żebyś widział zieloną/czerwoną lampkę na dashboardzie)
         boolean isReadyToShoot = flywheel.isAtTargetVelocity();
         SmartDashboard.putBoolean("TestShooter/READY TO FIRE", isReadyToShoot);
     }
@@ -108,13 +107,11 @@ public class ShooterSubsystem extends SubsystemBase {
                 hood.setExtensionMm(targetHoodMm);
             }, this),
 
-            // KROK 2: Poczekaj na rozpędzenie Flywheela i wysunięcie Kaptura
             Commands.waitUntil(() -> flywheel.isAtTargetVelocity()),
 
-            // KROK 3: Odpal systemy podające piłkę i LEDy
             Commands.parallel(
-                leds.setColorCommand(LedColor.MAGENTA),
-                passer.runPasserCommand(0.9),
+                leds.holdColorCommand(LedColor.MAGENTA),
+                passer.runPasserCommand(1),
                 feeder.feedShooterCommand(1.0)
             )
             
@@ -126,7 +123,7 @@ public class ShooterSubsystem extends SubsystemBase {
         .withName("Shooter.SmartShootSequence");
     }
 
-    public Command prepareShoot(FeederSubsystem feeder, LEDSubsystem leds) 
+    public Command prepareShoot(FeederSubsystem feeder) 
     {
         return Commands.sequence(
             Commands.runOnce(() -> {
@@ -142,7 +139,6 @@ public class ShooterSubsystem extends SubsystemBase {
             }, this)
         ).finallyDo( () -> {
             flywheel.stopControl();
-            leds.idle();
         }
         ).withName("Shooter.SmartShootPrepare");
     }
@@ -166,8 +162,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
             // KROK 3: Odpalamy podawanie piłki i sygnalizację LED
             Commands.parallel(
-                leds.setColorCommand(LedColor.MAGENTA),
-                passer.runPasserCommand(0.9),
+                leds.holdColorCommand(LedColor.MAGENTA),
+                passer.runPasserCommand(1.0),
                 feeder.feedShooterCommand(1.0)
             )
             
@@ -181,13 +177,10 @@ public class ShooterSubsystem extends SubsystemBase {
         .withName("Shooter.TestShootSequence");
     }
 
-    public Command shoot(FeederSubsystem feeder, LEDSubsystem leds, int set) {
-      return Commands.none();
+    public Command reversePasser() {
+        return passer.runPasserCommand(-0.8);
     }
 
-    // ==========================================
-    // METODA POMOCNICZA: Awaryjne zatrzymanie
-    // ==========================================
     public Command stopEverythingCommand() {
         return Commands.runOnce(() -> {
             flywheel.stopControl();

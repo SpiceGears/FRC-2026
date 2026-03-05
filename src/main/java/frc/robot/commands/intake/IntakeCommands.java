@@ -15,7 +15,7 @@ public class IntakeCommands {
             
             // 2. Szarp ramieniem góra-dół
             Commands.sequence(
-                pivot.moveUpTimeCommand(0.3), // Ramię w górę przez pół sekundy
+                pivot.moveUpTimeCommand(0.5), // Ramię w górę przez pół sekundy
                 pivot.deployCommand()         // Ramię w dół aż zaryje o zderzak
             ).repeatedly()
             

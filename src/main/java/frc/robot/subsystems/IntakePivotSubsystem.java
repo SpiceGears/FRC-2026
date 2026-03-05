@@ -52,7 +52,7 @@ public class IntakePivotSubsystem extends SubsystemBase {
     }
 
     public Command deployCommand() {
-        return Commands.run(() -> setVoltage(-1.5), this)
+        return Commands.run(() -> setVoltage(-2.5), this)
             // ZMIANA: Zamiast prądu, sprawdzamy czy ramię zjechało do soft limitu.
             // Zakładam, że dolny soft limit to około -5 stopni, więc przerywamy poniżej -4.5
             .until(() -> pivotController.getMechanismPosition().in(Degrees) <= -4) 
@@ -61,7 +61,7 @@ public class IntakePivotSubsystem extends SubsystemBase {
     }
 
     public Command moveUpTimeCommand(double timeSeconds) {
-        return Commands.run(() -> setVoltage(3.0), this) // Jedź w górę (+3.0V)
+        return Commands.run(() -> setVoltage(5.0), this) // Jedź w górę (+3.0V)
             .withTimeout(timeSeconds) // Przez X sekund
             .andThen(Commands.runOnce(() -> setVoltage(0), this)) // Zatrzymaj silnik
             .withName("Pivot.MoveUp");
