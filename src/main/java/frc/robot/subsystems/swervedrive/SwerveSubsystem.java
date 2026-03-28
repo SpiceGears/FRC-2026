@@ -212,7 +212,7 @@ public class SwerveSubsystem extends SubsystemBase
     // 2. Pobranie estymacji pozycji
     Optional<PoseEstimate> poseEstimates = limelightPoseEstimator.getPoseEstimate();
     
-    if (poseEstimates.isPresent())
+    if (poseEstimates.isPresent() && DrivebaseConstants.USE_VISION)
     {
         PoseEstimate poseEstimate = poseEstimates.get();
         

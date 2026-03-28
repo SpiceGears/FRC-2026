@@ -51,6 +51,9 @@ public class RobotContainer
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   final         CommandXboxController driverXbox = new CommandXboxController(0);
+
+  public double powerMultiplier = 1.0;
+  public double shooterSetting = 1.0;
   //final CommandXboxController copilotXbox = new CommandXboxController(1);
 
   //final AprilTagVisionSubsystem aprilTagVisionSubsystem = new AprilTagVisionSubsystem();
@@ -66,8 +69,8 @@ public class RobotContainer
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
    */
   SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
-                                                                () -> driverXbox.getLeftY() * -1,
-                                                                () -> driverXbox.getLeftX() * -1)
+                                                                () -> driverXbox.getLeftY() * -1 * powerMultiplier,
+                                                                () -> driverXbox.getLeftX() * -1 * powerMultiplier)
                                                             .withControllerRotationAxis(() -> driverXbox.getRightX() * -1)
                                                             .deadband(OperatorConstants.DEADBAND)
                                                             .scaleTranslation(0.8)
@@ -76,8 +79,8 @@ public class RobotContainer
   /**
    * Clone's the angular velocity input stream and converts it to a fieldRelative input stream.
    */
-  SwerveInputStream driveDirectAngle = driveAngularVelocity.copy().withControllerHeadingAxis(driverXbox::getRightX,
-                                                                                             driverXbox::getRightY)
+  SwerveInputStream driveDirectAngle = driveAngularVelocity.copy().withControllerHeadingAxis(() -> driverXbox.getRightX() * powerMultiplier,
+                                                                                             () -> driverXbox.getRightY() * powerMultiplier)
                                                            .headingWhile(true);
 
   /**
@@ -87,10 +90,10 @@ public class RobotContainer
                                                              .allianceRelativeControl(false);
 
   SwerveInputStream driveAngularVelocityKeyboard = SwerveInputStream.of(drivebase.getSwerveDrive(),
-                                                                        () -> -driverXbox.getLeftY(),
-                                                                        () -> -driverXbox.getLeftX())
+                                                                        () -> -driverXbox.getLeftY() * powerMultiplier,
+                                                                        () -> -driverXbox.getLeftX() * powerMultiplier)
                                                                     .withControllerRotationAxis(() -> driverXbox.getRawAxis(
-                                                                        2))
+                                                                        2) * powerMultiplier)
                                                                     .deadband(OperatorConstants.DEADBAND)
                                                                     .scaleTranslation(0.8)
                                                                     .allianceRelativeControl(true);
@@ -133,7 +136,9 @@ public class RobotContainer
   //final ShooterVisionAid svas = new ShooterVisionAid(drivebase::getPose);
 
   final ShooterSubsystem shooter = new ShooterSubsystem(shooterFlywheel, shooterPasser, hood, 
-    () -> drivebase.getPose().getTranslation().getDistance(Landmarks.hubPosition()) );
+    // () -> drivebase.getPose().getTranslation().getDistance(Landmarks.hubPosition()) 
+    () -> ShooterSubsystem.percentToHubDistanceKey(shooterSetting)
+    );
   
   public RobotContainer()
   {
@@ -242,6 +247,7 @@ public class RobotContainer
 
       //hood.setDefaultCommand(new AutoHoodAdjustment(hood));
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyroWithAlliance)));
+      driverXbox.x().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
       //driverXbox.x().onTrue(shooter.toggleEnabledCmd());
       //driverXbox.x().whileTrue(shooter.shootAdaptable(feeder, leds));
       //driverXbox.y().whileTrue(shooter.shoot(feeder, leds, 4000));
@@ -287,6 +293,30 @@ public class RobotContainer
       //driverXbox.povRight().onTrue(intakePivot.homingCommand());
 
       driverXbox.povLeft().whileTrue(intakePivot.deployCommand());
+
+      driverXbox.povUp().onTrue(Commands.runOnce(() -> 
+      {
+        if (powerMultiplier >= 1.0) return;
+        else powerMultiplier += 0.05;
+      }, drivebase));
+
+      driverXbox.povDown().onTrue(Commands.runOnce(() -> 
+      {
+        if (powerMultiplier <= 0.0) return;
+        else powerMultiplier -= 0.05;
+      }, drivebase));
+
+      driverXbox.y().onTrue(Commands.runOnce(() -> 
+      {
+        if (shooterSetting >= 1.0) return;
+        else shooterSetting += 0.05;
+      }, shooter));
+
+      driverXbox.b().onTrue(Commands.runOnce(() -> 
+      {
+        if (shooterSetting <= 0.0) return;
+        else shooterSetting -= 0.05;
+      }, shooter));
       
       // driverXbox.leftBumper().whileTrue(
       //   IntakeCommands.agitate(intakePivot, intakeRollers)

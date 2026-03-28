@@ -83,6 +83,9 @@ public class Robot extends TimedRobot
       DriverStation.isDisabled() ? "DISABLED" :
       "UNKNOWN"
     );
+
+    SmartDashboard.putNumber("Power Multiplier", m_robotContainer.powerMultiplier);
+    SmartDashboard.putNumber("Shooter setting override", m_robotContainer.shooterSetting);
   }
 
   /**

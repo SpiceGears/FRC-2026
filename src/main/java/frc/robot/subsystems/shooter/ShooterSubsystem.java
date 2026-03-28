@@ -38,6 +38,12 @@ public class ShooterSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("TestShooter/Target Hood (mm)", 10.0);
     }
 
+
+    public static double percentToHubDistanceKey(double power) 
+    {
+        return (power * (5.2 - 1.24)) + 1.24;
+    }
+
     private void loadShooterMaps() {
         rpmMap.put(1.24,3500.0);
         rpmMap.put(1.5, 3600.0);
