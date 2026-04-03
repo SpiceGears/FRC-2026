@@ -121,6 +121,6 @@ public class HoodSubsystem extends SubsystemBase {
   public void initializeMap() 
   {
     hoodPositionEncoderMap.put(SAFE_MIN_MM, 0.0);
-    hoodPositionEncoderMap.put(SAFE_MAX_MM, 12.8809);
+    hoodPositionEncoderMap.put(23.0, 13.6909);
   }
 }

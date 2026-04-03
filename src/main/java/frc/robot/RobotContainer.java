@@ -53,7 +53,7 @@ public class RobotContainer
   final         CommandXboxController driverXbox = new CommandXboxController(0);
 
   public double powerMultiplier = 1.0;
-  public double shooterSetting = 1.0;
+  public double shooterSetting = 0.0;
   //final CommandXboxController copilotXbox = new CommandXboxController(1);
 
   //final AprilTagVisionSubsystem aprilTagVisionSubsystem = new AprilTagVisionSubsystem();
