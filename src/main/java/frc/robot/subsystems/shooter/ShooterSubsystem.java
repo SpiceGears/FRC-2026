@@ -97,6 +97,13 @@ public class ShooterSubsystem extends SubsystemBase {
         SmartDashboard.putBoolean("TestShooter/READY TO FIRE", isReadyToShoot);
     }
 
+    public void directSetHood() 
+    {
+        double distance = distanceToHubSupplier.getAsDouble();
+        double targetHoodMm = hoodMap.get(distance);
+        hood.setExtensionMm(targetHoodMm);
+    }
+
     public Command shootCommand(FeederSubsystem feeder, LEDSubsystem leds) {
         return Commands.sequence(
             

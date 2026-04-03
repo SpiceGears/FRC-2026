@@ -136,6 +136,8 @@ public final class Constants
     public static final int HOOD_LEFT_ACTUATOR_ANALOG_PORT = 1;
     public static final int HOOD_RIGHT_ACTUATOR_ANALOG_PORT = 2;
 
+    public static final int HOOD_MOTOR_ID = 45;
+
   }
 }
 

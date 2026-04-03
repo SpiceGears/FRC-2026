@@ -309,13 +309,13 @@ public class RobotContainer
       driverXbox.y().onTrue(Commands.runOnce(() -> 
       {
         if (shooterSetting >= 1.0) return;
-        else shooterSetting += 0.05;
+        else {shooterSetting += 0.05; shooter.directSetHood();}
       }, shooter));
 
       driverXbox.b().onTrue(Commands.runOnce(() -> 
       {
         if (shooterSetting <= 0.0) return;
-        else shooterSetting -= 0.05;
+        else {shooterSetting -= 0.05; shooter.directSetHood();}
       }, shooter));
       
       // driverXbox.leftBumper().whileTrue(
