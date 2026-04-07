@@ -120,7 +120,7 @@ public class HoodSubsystem extends SubsystemBase {
 
   public void initializeMap() 
   {
-    hoodPositionEncoderMap.put(SAFE_MIN_MM, 0.0);
-    hoodPositionEncoderMap.put(23.0, 13.6909);
+    hoodPositionEncoderMap.put(10.0, 0.0);
+    hoodPositionEncoderMap.put(23.0, 11.5009);
   }
 }

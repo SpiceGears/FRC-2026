@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.intake.IntakeCommands;
+import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.subsystems.FeederSubsystem;
 import frc.robot.subsystems.IntakePivotSubsystem;
 import frc.robot.subsystems.IntakeRollersSubsystem;
@@ -127,7 +128,7 @@ public class RobotContainer
   final IntakeRollersSubsystem intakeRollers = new IntakeRollersSubsystem();
   final FlywheelSubsystem shooterFlywheel = new FlywheelSubsystem();
   final FeederSubsystem feeder = new FeederSubsystem();
-  //final ClimbSubsystem climb = new ClimbSubsystem();
+  final ClimbSubsystem climb = new ClimbSubsystem();
   final PasserSubsystem shooterPasser = new PasserSubsystem();
   final HoodSubsystem hood = new HoodSubsystem();
 
@@ -333,6 +334,9 @@ public class RobotContainer
         );
       driverXbox.rightBumper().whileTrue(intakeRollers.runRollersCommand(RollerSpeed.INTAKE).alongWith(intakePivot.deployCommand()));
       //driverXbox.povDown().whileTrue(IntakeCommands.agitate(intakePivot, intakeRollers));
+
+      driverXbox.start().whileTrue(climb.runManualCommand(5));
+      driverXbox.back().whileTrue(climb.runManualCommand(-5));
 
       leds.setDefaultCommand(leds.getDefaultDashboardCommand());
 
